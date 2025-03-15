@@ -14,8 +14,6 @@ const (
 	savedMsgStr = "Saved to "
 )
 
-var tabSize = 4
-
 func main() {
 	if len(os.Args) < 2 {
 		panic(errors.New("missing file name"))
@@ -96,10 +94,8 @@ func main() {
 					cx = prevLineLen
 				}
 			case tcell.KeyTab:
-				for i := 0; i < tabSize; i++ {
-					buffer = insertRune(buffer, cx, cy, ' ')
-					cx++
-				}
+				buffer = insertRune(buffer, cx, cy, '\t')
+				cx++
 			/*
 				Composite keys (CTRL + stuff)
 			*/
