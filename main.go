@@ -114,6 +114,10 @@ func main() {
 				return
 			case tcell.KeyCtrlX:
 				buffer = removeLine(buffer, cy)
+			case tcell.KeyCtrlL:
+				cx = len(lines[cy])
+			case tcell.KeyCtrlH:
+				cx = 0
 			/*
 				Navigation keys
 			*/
@@ -212,17 +216,17 @@ func insertRune(text string, x, y int, r rune) string {
 	return text[:index] + string(r) + text[index:]
 }
 
-func insertNewline(text string, x, y int) string {
-	index := getIndexFromPosition(text, x, y)
-	return text[:index] + "\n" + text[index:]
-}
-
 func removeRune(text string, x, y int) string {
 	index := getIndexFromPosition(text, x, y)
 	if index > 0 {
 		return text[:index-1] + text[index:]
 	}
 	return text
+}
+
+func insertNewline(text string, x, y int) string {
+	index := getIndexFromPosition(text, x, y)
+	return text[:index] + "\n" + text[index:]
 }
 
 func removeNewline(text string, lineIndex int) string {
