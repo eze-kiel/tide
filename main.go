@@ -42,15 +42,21 @@ func main() {
 
 	cx, cy := 0, 0
 	swidth, sheight := screen.Size()
+	offsetX, offsetY := 0, 0
+
 	var statusMsg string
 	statusTimeout := 0
 	for {
 		screen.Clear()
-		for i, l := range splitLines(buffer) {
-			for j, r := range l {
-				screen.SetContent(j, i, r, nil, tcell.StyleDefault)
+
+		lines := splitLines(buffer)
+		for i := offsetY; i < len(lines) && i < offsetY+sheight-1; i++ {
+			l := lines[i]
+			for j := offsetX; j < len(l) && j < offsetX+swidth; j++ {
+				screen.SetContent(j-offsetX, i-offsetY, rune(l[j]), nil, tcell.StyleDefault)
 			}
 		}
+
 		for i, r := range editModeStr {
 			screen.SetContent(i, sheight-1, r, nil, tcell.StyleDefault.Reverse(true))
 		}
@@ -63,7 +69,7 @@ func main() {
 			}
 		}
 
-		screen.ShowCursor(cx, cy)
+		screen.ShowCursor(cx-offsetX, cy-offsetY)
 		screen.Show()
 
 		ev := screen.PollEvent()
@@ -104,7 +110,7 @@ func main() {
 					statusMsg = savedMsgStr + f
 				}
 				statusTimeout = 5
-			case tcell.KeyCtrlQ:
+			case tcell.KeyCtrlQ, tcell.KeyEscape:
 				return
 			case tcell.KeyCtrlX:
 				buffer = removeLine(buffer, cy)
@@ -123,18 +129,32 @@ func main() {
 		}
 
 		// keep cursor in bounds
-		lines := splitLines(buffer)
-		if cy < 0 {
-			cy = 0
-		}
-		if cy >= len(lines) {
-			cy = len(lines) - 1
-		}
+		lines = splitLines(buffer)
 		if cx < 0 {
 			cx = 0
 		}
-		if cy < len(lines) && cx > len(lines[cy]) {
+		if cy < 0 {
+			cy = 0
+		}
+
+		if cy >= len(lines) {
+			cy = len(lines) - 1
+		}
+
+		if cx > len(lines[cy]) {
 			cx = len(lines[cy])
+		}
+
+		if cx < offsetX {
+			offsetX = cx
+		} else if cx >= offsetX+swidth {
+			offsetX = cx - swidth + 1
+		}
+
+		if cy < offsetY {
+			offsetY = cy
+		} else if cy >= offsetY+sheight-1 {
+			offsetY = cy - sheight + 2
 		}
 	}
 }
