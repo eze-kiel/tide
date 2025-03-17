@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"git.sr.ht/~hacb/ed/editor"
+	"github.com/eze-kiel/tide/editor"
 	"github.com/gdamore/tcell/v2"
 )
 

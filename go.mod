@@ -1,4 +1,4 @@
-module git.sr.ht/~hacb/ed
+module github.com/eze-kiel/tide
 
 go 1.23.4
 
