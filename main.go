@@ -2,16 +2,11 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"strings"
 
+	"git.sr.ht/~hacb/ed/editor"
 	"github.com/gdamore/tcell/v2"
-)
-
-const (
-	editModeStr = "EDIT"
-	savedMsgStr = "Saved to "
 )
 
 func main() {
@@ -19,88 +14,83 @@ func main() {
 		panic(errors.New("missing file name"))
 	}
 	f := os.Args[1]
-	screen, err := tcell.NewScreen()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
-	}
-	if err := screen.Init(); err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
-	}
-	defer screen.Fini()
 
-	var buffer string
+	e, err := editor.New()
+	if err != nil {
+		panic(err)
+	}
+	defer e.Screen.Fini()
+
 	if fileExists(f) {
-		buffer, err = readFile(f)
+		e.Buffer, err = readFile(f)
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	cx, cy := 0, 0
-	swidth, sheight := screen.Size()
+	swidth, sheight := e.Screen.Size()
 	offsetX, offsetY := 0, 0
 
 	var statusMsg string
 	statusTimeout := 0
 	for {
-		screen.Clear()
+		e.Screen.Clear()
 
-		lines := splitLines(buffer)
+		lines := splitLines(e.Buffer)
 		for i := offsetY; i < len(lines) && i < offsetY+sheight-1; i++ {
 			l := lines[i]
 			for j := offsetX; j < len(l) && j < offsetX+swidth; j++ {
-				screen.SetContent(j-offsetX, i-offsetY, rune(l[j]), nil, tcell.StyleDefault)
+				e.Screen.SetContent(j-offsetX, i-offsetY, rune(l[j]), nil, tcell.StyleDefault)
 			}
 		}
 
 		for i, r := range editModeStr {
-			screen.SetContent(i, sheight-1, r, nil, tcell.StyleDefault.Reverse(true))
+			e.Screen.SetContent(i, sheight-1, r, nil, tcell.StyleDefault.Reverse(true))
 		}
 		if statusMsg != "" && statusTimeout > 0 {
 			statusTimeout--
 			for i, r := range statusMsg {
 				if i < swidth {
-					screen.SetContent(swidth-len(statusMsg)+i, sheight-1, r, nil, tcell.StyleDefault)
+					e.Screen.SetContent(swidth-len(statusMsg)+i, sheight-1, r, nil, tcell.StyleDefault)
 				}
 			}
 		}
 
-		screen.ShowCursor(cx-offsetX, cy-offsetY)
-		screen.Show()
+		e.Screen.ShowCursor(cx-offsetX, cy-offsetY)
+		e.Screen.Show()
 
-		ev := screen.PollEvent()
+		ev := e.Screen.PollEvent()
 		switch ev := ev.(type) {
 		case *tcell.EventKey:
 			switch ev.Key() {
 			case tcell.KeyRune:
-				buffer = insertRune(buffer, cx, cy, ev.Rune())
+				e.Buffer = insertRune(e.Buffer, cx, cy, ev.Rune())
 				cx++
 			case tcell.KeyEnter:
-				buffer = insertNewline(buffer, cx, cy)
+				e.Buffer = insertNewline(e.Buffer, cx, cy)
 				cx = 0
 				cy++
 			case tcell.KeyBackspace2:
 				if cx > 0 {
-					buffer = removeRune(buffer, cx, cy)
+					e.Buffer = removeRune(e.Buffer, cx, cy)
 					cx--
 				} else if cy > 0 {
-					lines := splitLines(buffer)
+					lines := splitLines(e.Buffer)
 					prevLineLen := len(lines[cy-1])
-					buffer = removeNewline(buffer, cy)
+					e.Buffer = removeNewline(e.Buffer, cy)
 
 					cy--
 					cx = prevLineLen
 				}
 			case tcell.KeyTab:
-				buffer = insertRune(buffer, cx, cy, '\t')
+				e.Buffer = insertRune(e.Buffer, cx, cy, '\t')
 				cx++
 			/*
 				Composite keys (CTRL + stuff)
 			*/
 			case tcell.KeyCtrlW:
-				if writeFile(f, buffer) != nil {
+				if writeFile(f, e.Buffer) != nil {
 					statusMsg = "Error: " + err.Error()
 				} else {
 					statusMsg = savedMsgStr + f
@@ -109,7 +99,7 @@ func main() {
 			case tcell.KeyCtrlQ, tcell.KeyEscape:
 				return
 			case tcell.KeyCtrlX:
-				buffer = removeLine(buffer, cy)
+				e.Buffer = removeLine(e.Buffer, cy)
 			case tcell.KeyCtrlL:
 				cx = len(lines[cy])
 			case tcell.KeyCtrlH:
@@ -129,7 +119,7 @@ func main() {
 		}
 
 		// keep cursor in bounds
-		lines = splitLines(buffer)
+		lines = splitLines(e.Buffer)
 		if cx < 0 {
 			cx = 0
 		}
