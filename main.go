@@ -22,7 +22,7 @@ func main() {
 	defer e.Screen.Fini()
 
 	if file.Exists(e.Filename) {
-		e.Buffer, err = file.Read(e.Filename)
+		e.InternalBuffer.Data, err = file.Read(e.Filename)
 		if err != nil {
 			panic(err)
 		}

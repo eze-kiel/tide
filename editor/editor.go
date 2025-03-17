@@ -6,7 +6,6 @@ import (
 	"syscall"
 
 	"github.com/eze-kiel/tide/buffer"
-	"github.com/eze-kiel/tide/str"
 	"github.com/gdamore/tcell/v2"
 )
 
@@ -23,12 +22,14 @@ type Editor struct {
 
 	Mode     int
 	Screen   tcell.Screen
-	Buffer   string
 	Filename string
 
-	CursorX, CursorY int
-	OffsetX, OffsetY int
-	Width, Height    int
+	Width, Height int
+
+	InternalBuffer buffer.Buffer
+	RenderBuffer   buffer.Buffer
+	InternalCursor struct{ X, Y int }
+	RenderCursor   struct{ X, Y int }
 
 	StatusMsg     string
 	StatusTimeout int
@@ -63,7 +64,7 @@ func New() (*Editor, error) {
 
 func (e *Editor) Run() error {
 	signal.Notify(e.sigs, syscall.SIGWINCH)
-	// todo: stuff done by this goroutine should be protected by a mutex so we
+	// stuff done by this goroutine should be protected by a mutex so we
 	// do not update the size and read the values at the same time
 	go func() {
 		for range e.sigs {
@@ -75,76 +76,29 @@ func (e *Editor) Run() error {
 	for {
 		e.Screen.Clear()
 
-		lines := buffer.SplitLines(e.Buffer)
-		for i := e.OffsetY; i < len(lines) && i < e.OffsetY+e.Height-1; i++ {
+		e.RenderBuffer = e.InternalBuffer.Render()
+		lines := e.RenderBuffer.SplitLines()
+
+		for i := 0; i < len(lines) && i < e.Height-1; i++ {
 			l := lines[i]
-			for j := e.OffsetX; j < len(l) && j < e.OffsetX+e.Width; j++ {
-				e.Screen.SetContent(j-e.OffsetX, i-e.OffsetY, rune(l[j]), nil, tcell.StyleDefault)
+			for j := 0; j < len(l) && j < e.Width; j++ {
+				e.Screen.SetContent(j, i, rune(l[j]), nil, tcell.StyleDefault)
 			}
 		}
 
-		// the switch below could be simplified?
-		switch e.Mode {
-		case EditMode:
-			for i, r := range str.EditMode {
-				e.Screen.SetContent(i, e.Height-1, r, nil, tcell.StyleDefault.Reverse(true))
-			}
-		case VisualMode:
-			for i, r := range str.VisualMode {
-				e.Screen.SetContent(i, e.Height-1, r, nil, tcell.StyleDefault.Reverse(true))
-			}
-		case CommandMode:
-			// TODO
-		}
-
-		if e.StatusMsg != "" && e.StatusTimeout > 0 {
-			e.StatusTimeout--
-			for i, r := range e.StatusMsg {
-				if i < e.Width {
-					e.Screen.SetContent(e.Width-len(e.StatusMsg)+i, e.Height-1, r, nil, tcell.StyleDefault)
-				}
-			}
-		}
-
-		e.Screen.ShowCursor(e.CursorX-e.OffsetX, e.CursorY-e.OffsetY)
+		e.Screen.ShowCursor(e.RenderCursor.X, e.RenderCursor.Y)
 		e.Screen.Show()
 
-		switch e.Mode {
-		case EditMode:
-			e.EditModeRoutine(lines)
-		case VisualMode:
-			e.VisualModeRoutine(lines)
-		default:
-			continue
-		}
-
-		// keep the cursor in bounds
-		lines = buffer.SplitLines(e.Buffer)
-		if e.CursorX < 0 {
-			e.CursorX = 0
-		}
-		if e.CursorY < 0 {
-			e.CursorY = 0
-		}
-
-		if e.CursorY >= len(lines) {
-			e.CursorY = len(lines) - 1
-		}
-
-		if e.CursorX > len(lines[e.CursorY]) {
-			e.CursorX = len(lines[e.CursorY])
-		}
-
-		if e.CursorX < e.OffsetX {
-			e.OffsetX = e.CursorX
-		} else if e.CursorX >= e.OffsetX+e.Width {
-			e.OffsetX = e.CursorX - e.Width + 1
-		}
-
-		if e.CursorY < e.OffsetY {
-			e.OffsetY = e.CursorY
-		} else if e.CursorY >= e.OffsetY+e.Height-1 {
-			e.OffsetY = e.CursorY - e.Height + 2
+		ev := e.Screen.PollEvent()
+		switch ev := ev.(type) {
+		case *tcell.EventKey:
+			switch ev.Key() {
+			case tcell.KeyEsc:
+				return nil
+			case tcell.KeyRight:
+				e.moveInternalCursol(1, 0)
+				e.updateRenderCursor()
+			}
 		}
 	}
 }
@@ -160,4 +114,21 @@ func (e *Editor) SwitchMode() {
 func (e Editor) Quit() {
 	e.Screen.Fini()
 	os.Exit(0)
+}
+
+// move the editor's internal cursor the desired offset
+func (e *Editor) moveInternalCursol(dx, dy int) {
+	e.InternalCursor.X += dx
+	e.InternalCursor.Y += dy
+}
+
+// update the editor's render cursor based on the position of the internal cursor
+func (e *Editor) updateRenderCursor() {
+	lines := e.R
+	if e.RenderCursor.X <= len(e.RenderBuffer.Data) {
+		e.RenderCursor.X = e.InternalCursor.X
+	}
+
+	if e.RenderCursor.Y <= 
+	e.RenderCursor.Y = e.InternalCursor.Y
 }
