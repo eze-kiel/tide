@@ -6,8 +6,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-// TODO: move fname to struct
-func (e *Editor) VisualModeRoutine(fname string, lines []string) {
+func (e *Editor) VisualModeRoutine(lines []string) {
 	ev := e.Screen.PollEvent()
 	switch ev := ev.(type) {
 	case *tcell.EventKey:
@@ -35,10 +34,10 @@ func (e *Editor) VisualModeRoutine(fname string, lines []string) {
 					e.CursorY = 0
 				}
 			case 'w':
-				if err := file.Write(fname, e.Buffer); err != nil {
+				if err := file.Write(e.Filename, e.Buffer); err != nil {
 					e.StatusMsg = "Error: " + err.Error()
 				} else {
-					e.StatusMsg = str.AutoSavedMsg + fname
+					e.StatusMsg = str.AutoSavedMsg + e.Filename
 				}
 				e.StatusTimeout = 5
 			}

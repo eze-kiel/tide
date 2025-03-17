@@ -7,8 +7,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-// TODO: move fname to struct
-func (e *Editor) EditModeRoutine(fname string, lines []string) {
+func (e *Editor) EditModeRoutine(lines []string) {
 	ev := e.Screen.PollEvent()
 	switch ev := ev.(type) {
 	case *tcell.EventKey:
@@ -18,10 +17,10 @@ func (e *Editor) EditModeRoutine(fname string, lines []string) {
 			e.CursorX++
 		case tcell.KeyEsc:
 			if e.autoSaveOnSwitch {
-				if err := file.Write(fname, e.Buffer); err != nil {
+				if err := file.Write(e.Filename, e.Buffer); err != nil {
 					e.StatusMsg = "Error: " + err.Error()
 				} else {
-					e.StatusMsg = str.AutoSavedMsg + fname
+					e.StatusMsg = str.AutoSavedMsg + e.Filename
 				}
 				e.StatusTimeout = 5
 			}
@@ -49,10 +48,10 @@ func (e *Editor) EditModeRoutine(fname string, lines []string) {
 			Composite keys (CTRL + stuff)
 		*/
 		case tcell.KeyCtrlW:
-			if err := file.Write(fname, e.Buffer); err != nil {
+			if err := file.Write(e.Filename, e.Buffer); err != nil {
 				e.StatusMsg = "Error: " + err.Error()
 			} else {
-				e.StatusMsg = str.SavedMsg + fname
+				e.StatusMsg = str.SavedMsg + e.Filename
 			}
 			e.StatusTimeout = 5
 		case tcell.KeyCtrlQ:
