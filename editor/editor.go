@@ -40,6 +40,7 @@ type Editor struct {
 
 	StatusMsg     string
 	StatusTimeout int
+	fileChanged   bool
 
 	metadata metadata.Metadata
 
@@ -56,6 +57,7 @@ func New() (*Editor, error) {
 		sigs:             make(chan os.Signal, 1),
 		Mode:             VisualMode,
 		autoSaveOnSwitch: false,
+		fileChanged:      false,
 	}
 
 	var err error
@@ -437,6 +439,7 @@ func (e *Editor) deleteRuneAtCursor() {
 
 // helper function to update the internal buffer from an array of lines
 func (e *Editor) updateBufferFromLines(lines []string) {
+	e.fileChanged = true
 	e.InternalBuffer.Data = strings.Join(lines, "\n")
 }
 

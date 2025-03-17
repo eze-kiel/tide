@@ -80,6 +80,13 @@ func (e *Editor) executeCommand(cmd string) {
 
 	switch parts[0] {
 	case "q", "quit":
+		if !e.fileChanged {
+			e.Quit()
+		}
+		e.StatusMsg = str.FileModified
+		e.StatusTimeout = 5
+
+	case "q!", "quit!":
 		e.Quit()
 
 	case "w", "write":
