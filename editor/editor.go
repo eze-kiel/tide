@@ -89,10 +89,18 @@ func (e *Editor) Run() error {
 		e.RenderBuffer = e.InternalBuffer.Render()
 		lines := e.RenderBuffer.SplitLines()
 
+		for y := 0; y < e.Height; y++ {
+			for x := 0; x < e.Width; x++ {
+				e.Screen.SetContent(x, y, rune(0), nil, tcell.StyleDefault.
+					Background(tcell.ColorBlack))
+			}
+		}
 		for i := e.OffsetY; i < len(lines) && i < e.OffsetY+e.Height-2; i++ {
 			l := lines[i]
 			for j := e.OffsetX; j < len(l) && j < e.OffsetX+e.Width; j++ {
-				e.Screen.SetContent(j-e.OffsetX, i-e.OffsetY, rune(l[j]), nil, tcell.StyleDefault)
+				e.Screen.SetContent(j-e.OffsetX, i-e.OffsetY, rune(l[j]), nil, tcell.StyleDefault.
+					Background(tcell.ColorBlack).
+					Foreground(tcell.ColorWhiteSmoke))
 			}
 		}
 
@@ -100,15 +108,15 @@ func (e *Editor) Run() error {
 		switch e.Mode {
 		case EditMode:
 			for i, r := range str.EditMode {
-				e.Screen.SetContent(i, e.Height-1, r, nil, tcell.StyleDefault.Reverse(true))
+				e.Screen.SetContent(i, e.Height-1, r, nil, tcell.StyleDefault.Background(tcell.ColorDarkOliveGreen))
 			}
 		case VisualMode:
 			for i, r := range str.VisualMode {
-				e.Screen.SetContent(i, e.Height-1, r, nil, tcell.StyleDefault.Reverse(true))
+				e.Screen.SetContent(i, e.Height-1, r, nil, tcell.StyleDefault.Background(tcell.ColorDarkOliveGreen))
 			}
 		case CommandMode:
 			for i := 0; i < e.Width; i++ {
-				e.Screen.SetContent(i, e.Height-1, ' ', nil, tcell.StyleDefault)
+				e.Screen.SetContent(i, e.Height-1, rune(0), nil, tcell.StyleDefault)
 			}
 
 			e.Screen.SetContent(0, e.Height-1, ':', nil, tcell.StyleDefault)
@@ -128,7 +136,10 @@ func (e *Editor) Run() error {
 
 		if e.PerfAnalysis {
 			for i, r := range e.metadata.Elapsed.String() {
-				e.Screen.SetContent(e.Width-len(e.metadata.Elapsed.String())+i, e.Height-2, r, nil, tcell.StyleDefault.Bold(true))
+				e.Screen.SetContent(e.Width-len(e.metadata.Elapsed.String())+i, e.Height-2, r, nil,
+					tcell.StyleDefault.
+						Background(tcell.ColorDarkRed).
+						Bold(true))
 			}
 		}
 
