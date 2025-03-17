@@ -56,10 +56,10 @@ func New() (*Editor, error) {
 }
 
 func (e *Editor) Run() error {
-	swidth, sheight := e.Screen.Size()
-
 	for {
+		swidth, sheight := e.Screen.Size()
 		e.Screen.Clear()
+
 		lines := buffer.SplitLines(e.Buffer)
 		for i := e.OffsetY; i < len(lines) && i < e.OffsetY+sheight-1; i++ {
 			l := lines[i]
