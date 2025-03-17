@@ -116,12 +116,18 @@ func (e *Editor) Run() error {
 			}
 		case CommandMode:
 			for i := 0; i < e.Width; i++ {
-				e.Screen.SetContent(i, e.Height-1, rune(0), nil, tcell.StyleDefault)
+				e.Screen.SetContent(i, e.Height-1, rune(0), nil, tcell.StyleDefault.
+					Background(tcell.ColorBlack).
+					Foreground(tcell.ColorWhiteSmoke))
 			}
 
-			e.Screen.SetContent(0, e.Height-1, ':', nil, tcell.StyleDefault)
+			e.Screen.SetContent(0, e.Height-1, ':', nil, tcell.StyleDefault.
+				Background(tcell.ColorBlack).
+				Foreground(tcell.ColorWhiteSmoke))
 			for i, r := range e.CommandBuffer {
-				e.Screen.SetContent(i+1, e.Height-1, r, nil, tcell.StyleDefault)
+				e.Screen.SetContent(i+1, e.Height-1, r, nil, tcell.StyleDefault.
+					Background(tcell.ColorBlack).
+					Foreground(tcell.ColorWhiteSmoke))
 			}
 		}
 
@@ -129,7 +135,9 @@ func (e *Editor) Run() error {
 			e.StatusTimeout--
 			for i, r := range e.StatusMsg {
 				if i < e.Width {
-					e.Screen.SetContent(e.Width-len(e.StatusMsg)+i, e.Height-1, r, nil, tcell.StyleDefault)
+					e.Screen.SetContent(e.Width-len(e.StatusMsg)+i, e.Height-1, r, nil, tcell.StyleDefault.
+						Background(tcell.ColorBlack).
+						Foreground(tcell.ColorWhiteSmoke))
 				}
 			}
 		}
