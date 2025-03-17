@@ -108,11 +108,15 @@ func (e *Editor) Run() error {
 		switch e.Mode {
 		case EditMode:
 			for i, r := range str.EditMode {
-				e.Screen.SetContent(i, e.Height-1, r, nil, tcell.StyleDefault.Background(tcell.ColorDarkOliveGreen))
+				e.Screen.SetContent(i, e.Height-1, r, nil, tcell.StyleDefault.
+					Background(tcell.ColorDarkOliveGreen).
+					Foreground(tcell.ColorWhiteSmoke))
 			}
 		case VisualMode:
 			for i, r := range str.VisualMode {
-				e.Screen.SetContent(i, e.Height-1, r, nil, tcell.StyleDefault.Background(tcell.ColorDarkOliveGreen))
+				e.Screen.SetContent(i, e.Height-1, r, nil, tcell.StyleDefault.
+					Background(tcell.ColorDarkOliveGreen).
+					Foreground(tcell.ColorWhiteSmoke))
 			}
 		case CommandMode:
 			for i := 0; i < e.Width; i++ {
