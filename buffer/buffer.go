@@ -5,7 +5,8 @@ import (
 )
 
 const (
-	TAB_SIZE = 4
+	TAB_SIZE   = 4
+	TAB_SYMBOL = " "
 )
 
 type Buffer struct {
@@ -19,6 +20,6 @@ func (b Buffer) SplitLines() []string {
 // this function translates the internal buffer to something human-readable (\t
 // are multiple spaces, ...)
 func (b Buffer) Render() Buffer {
-	tmp := strings.ReplaceAll(b.Data, "\t", strings.Repeat(" ", TAB_SIZE))
+	tmp := strings.ReplaceAll(b.Data, "\t", strings.Repeat(TAB_SYMBOL, TAB_SIZE))
 	return Buffer{Data: tmp}
 }
