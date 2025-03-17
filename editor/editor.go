@@ -2,6 +2,8 @@ package editor
 
 import (
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/eze-kiel/tide/buffer"
 	"github.com/eze-kiel/tide/str"
@@ -17,6 +19,8 @@ const (
 var autoSaveOnSwitch = true
 
 type Editor struct {
+	sigs chan os.Signal
+
 	Mode     int
 	Screen   tcell.Screen
 	Buffer   string
@@ -24,6 +28,7 @@ type Editor struct {
 
 	CursorX, CursorY int
 	OffsetX, OffsetY int
+	Width, Height    int
 
 	StatusMsg     string
 	StatusTimeout int
@@ -37,6 +42,7 @@ type Editor struct {
 
 func New() (*Editor, error) {
 	e := &Editor{
+		sigs:             make(chan os.Signal, 1),
 		Mode:             VisualMode,
 		fastJumpLength:   10,
 		autoSaveOnSwitch: true,
@@ -56,14 +62,23 @@ func New() (*Editor, error) {
 }
 
 func (e *Editor) Run() error {
+	signal.Notify(e.sigs, syscall.SIGWINCH)
+	// todo: stuff done by this goroutine should be protected by a mutex so we
+	// do not update the size and read the values at the same time
+	go func() {
+		for range e.sigs {
+			e.Width, e.Height = e.Screen.Size()
+		}
+	}()
+
+	e.Width, e.Height = e.Screen.Size()
 	for {
-		swidth, sheight := e.Screen.Size()
 		e.Screen.Clear()
 
 		lines := buffer.SplitLines(e.Buffer)
-		for i := e.OffsetY; i < len(lines) && i < e.OffsetY+sheight-1; i++ {
+		for i := e.OffsetY; i < len(lines) && i < e.OffsetY+e.Height-1; i++ {
 			l := lines[i]
-			for j := e.OffsetX; j < len(l) && j < e.OffsetX+swidth; j++ {
+			for j := e.OffsetX; j < len(l) && j < e.OffsetX+e.Width; j++ {
 				e.Screen.SetContent(j-e.OffsetX, i-e.OffsetY, rune(l[j]), nil, tcell.StyleDefault)
 			}
 		}
@@ -72,11 +87,11 @@ func (e *Editor) Run() error {
 		switch e.Mode {
 		case EditMode:
 			for i, r := range str.EditMode {
-				e.Screen.SetContent(i, sheight-1, r, nil, tcell.StyleDefault.Reverse(true))
+				e.Screen.SetContent(i, e.Height-1, r, nil, tcell.StyleDefault.Reverse(true))
 			}
 		case VisualMode:
 			for i, r := range str.VisualMode {
-				e.Screen.SetContent(i, sheight-1, r, nil, tcell.StyleDefault.Reverse(true))
+				e.Screen.SetContent(i, e.Height-1, r, nil, tcell.StyleDefault.Reverse(true))
 			}
 		case CommandMode:
 			// TODO
@@ -85,8 +100,8 @@ func (e *Editor) Run() error {
 		if e.StatusMsg != "" && e.StatusTimeout > 0 {
 			e.StatusTimeout--
 			for i, r := range e.StatusMsg {
-				if i < swidth {
-					e.Screen.SetContent(swidth-len(e.StatusMsg)+i, sheight-1, r, nil, tcell.StyleDefault)
+				if i < e.Width {
+					e.Screen.SetContent(e.Width-len(e.StatusMsg)+i, e.Height-1, r, nil, tcell.StyleDefault)
 				}
 			}
 		}
@@ -122,14 +137,14 @@ func (e *Editor) Run() error {
 
 		if e.CursorX < e.OffsetX {
 			e.OffsetX = e.CursorX
-		} else if e.CursorX >= e.OffsetX+swidth {
-			e.OffsetX = e.CursorX - swidth + 1
+		} else if e.CursorX >= e.OffsetX+e.Width {
+			e.OffsetX = e.CursorX - e.Width + 1
 		}
 
 		if e.CursorY < e.OffsetY {
 			e.OffsetY = e.CursorY
-		} else if e.CursorY >= e.OffsetY+sheight-1 {
-			e.OffsetY = e.CursorY - sheight + 2
+		} else if e.CursorY >= e.OffsetY+e.Height-1 {
+			e.OffsetY = e.CursorY - e.Height + 2
 		}
 	}
 }
