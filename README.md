@@ -12,6 +12,7 @@ _my own minimalist text editor_
     - [Shortcuts](#shortcuts)
       - [Visual mode](#visual-mode)
       - [Edit mode](#edit-mode)
+      - [Commands](#commands)
   - [License](#license)
 
 ## Usage
@@ -42,28 +43,32 @@ $ tide <filename>
 
 #### Visual mode
 
-|   Shortcut   | Action                                       |
-| :----------: | :------------------------------------------- |
-| <kbd>Q</kbd> | Quit the editor                              |
-| <kbd>I</kbd> | Start inserting (switch to Edit mode)        |
-| <kbd>L</kbd> | Move the cursor to the end of the line       |
-| <kbd>H</kbd> | Move the cursor to the beginning of the line |
-| <kbd>D</kbd> | Fast jump downward (default: 10 lines)       |
-| <kbd>U</kbd> | Fast jump upward (default: 10 lines)         |
-| <kbd>W</kbd> | Save buffer to file                          |
+|           Shortcut           | Action                                       |
+| :--------------------------: | :------------------------------------------- |
+|         <kbd>:</kbd>         | Open the command menu                        |
+|         <kbd>I</kbd>         | Start inserting (switch to Edit mode)        |
+|         <kbd>L</kbd>         | Move the cursor to the end of the line       |
+|         <kbd>H</kbd>         | Move the cursor to the beginning of the line |
+| <kbd>Ctrl</kbd>+<kbd>D</kbd> | Fast jump downward                           |
+| <kbd>Ctrl</kbd>+<kbd>U</kbd> | Fast jump upward                             |
+|         <kbd>D</kbd>         | Delete under cursor                          |
 
 #### Edit mode
 
-|           Shortcut           | Action                                      |
-| :--------------------------: | :------------------------------------------ |
-|        <kbd>Esc</kbd>        | Switch to Visual Mode (Autosave if enabled) |
-| <kbd>Ctrl</kbd>+<kbd>Q</kbd> | Quit the editor                             |
-| <kbd>Ctrl</kbd>+<kbd>X</kbd> | Delete current line                         |
-| <kbd>Ctrl</kbd>+<kbd>L</kbd> | Move cursor to the end of the line          |
-| <kbd>Ctrl</kbd>+<kbd>H</kbd> | Move cursor to the beginning of the line    |
-| <kbd>Ctrl</kbd>+<kbd>D</kbd> | Fast jump downward (default: 10 lines)      |
-| <kbd>Ctrl</kbd>+<kbd>U</kbd> | Fast jump upward (default: 10 lines)        |
-| <kbd>Ctrl</kbd>+<kbd>W</kbd> | Save buffer to file                         |
+|    Shortcut    | Action                                          |
+| :------------: | :---------------------------------------------- |
+| <kbd>Esc</kbd> | Switch to Visual Mode (and autosave if enabled) |
+
+#### Commands
+
+|          Command           | Action                                    |
+| :------------------------: | :---------------------------------------- |
+|        `q`, `quit`         | Quit the editor                           |
+|       `q!`, `quit!`        | Force quit the editor                     |
+| `w [file]`, `write [file]` | Write changes to file                     |
+|  `wq [file]`, `x [file]`   | Write changes to file and quit the editor |
+|            `ge`            | Go to the end of the file                 |
+|            `gt`            | Go to the top of the file                 |
 
 ## License
 
