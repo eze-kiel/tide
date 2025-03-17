@@ -1,13 +1,17 @@
 package editor
 
 import (
+	"time"
+
 	"github.com/gdamore/tcell/v2"
 )
 
 func (e *Editor) editModeRoutine() {
+	var start time.Time
 	ev := e.Screen.PollEvent()
 	switch ev := ev.(type) {
 	case *tcell.EventKey:
+		start = time.Now()
 		switch ev.Key() {
 		case tcell.KeyEsc:
 			if e.autoSaveOnSwitch {
@@ -31,5 +35,8 @@ func (e *Editor) editModeRoutine() {
 		case tcell.KeyTab:
 			e.insertRune('\t')
 		}
+	}
+	if e.PerfAnalysis {
+		e.metadata.Elapsed = time.Since(start)
 	}
 }

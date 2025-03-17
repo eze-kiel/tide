@@ -2,15 +2,18 @@ package editor
 
 import (
 	"strings"
+	"time"
 
 	"github.com/eze-kiel/tide/str"
 	"github.com/gdamore/tcell/v2"
 )
 
 func (e *Editor) commandModeRoutine() {
+	var start time.Time
 	ev := e.Screen.PollEvent()
 	switch ev := ev.(type) {
 	case *tcell.EventKey:
+		start = time.Now()
 		switch ev.Key() {
 		case tcell.KeyEsc:
 			e.exitCommandMode()
@@ -54,6 +57,9 @@ func (e *Editor) commandModeRoutine() {
 		case tcell.KeyEnd:
 			e.CommandCursorPos = len(e.CommandBuffer)
 		}
+	}
+	if e.PerfAnalysis {
+		e.metadata.Elapsed = time.Since(start)
 	}
 }
 

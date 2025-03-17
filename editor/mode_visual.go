@@ -1,13 +1,17 @@
 package editor
 
 import (
+	"time"
+
 	"github.com/gdamore/tcell/v2"
 )
 
 func (e *Editor) visualModeRoutine() {
+	var start time.Time
 	ev := e.Screen.PollEvent()
 	switch ev := ev.(type) {
 	case *tcell.EventKey:
+		start = time.Now()
 		switch ev.Key() {
 		case tcell.KeyRight:
 			e.moveInternalCursor(1, 0)
@@ -29,5 +33,8 @@ func (e *Editor) visualModeRoutine() {
 				e.SwitchMode()
 			}
 		}
+	}
+	if e.PerfAnalysis {
+		e.metadata.Elapsed = time.Since(start)
 	}
 }
