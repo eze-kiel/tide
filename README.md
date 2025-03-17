@@ -5,6 +5,15 @@ _my own minimalist text editor_
 > [!WARNING]
 > This project is in early development and is probably really buggy.
 
+- [tide](#tide)
+  - [Usage](#usage)
+    - [Build](#build)
+    - [Run](#run)
+    - [Shortcuts](#shortcuts)
+      - [Visual mode](#visual-mode)
+      - [Edit mode](#edit-mode)
+  - [License](#license)
+
 ## Usage
 
 ### Build
