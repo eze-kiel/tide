@@ -27,6 +27,8 @@ func (e *Editor) visualModeRoutine() {
 			e.moveInternalCursor(0, e.fastJumpLength)
 		case tcell.KeyRune:
 			switch ev.Rune() {
+			case 'd':
+				e.deleteRuneAtCursor()
 			case ':':
 				e.Mode = CommandMode
 			case 'i':
