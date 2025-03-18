@@ -84,7 +84,7 @@ func (e *Editor) Run() error {
 	}()
 
 	e.Width, e.Height = e.Screen.Size()
-	e.fastJumpLength = (e.Height / 2) + 2
+	e.fastJumpLength = (e.Height / 3)
 	for {
 		e.Screen.Clear()
 
