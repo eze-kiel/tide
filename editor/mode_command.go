@@ -27,6 +27,9 @@ func (e *Editor) commandModeRoutine() {
 			}
 
 		case tcell.KeyBackspace, tcell.KeyBackspace2:
+			if e.CommandBuffer == "" {
+				e.exitCommandMode()
+			}
 			if e.CommandCursorPos > 0 {
 				e.CommandBuffer = e.CommandBuffer[:e.CommandCursorPos-1] + e.CommandBuffer[e.CommandCursorPos:]
 				e.CommandCursorPos--
