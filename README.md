@@ -51,6 +51,7 @@ $ tide [filename]
 |         <kbd>E</kbd>          | Move the cursor to the end of the file       |
 |         <kbd>O</kbd>          | Insert a new line under the cursor           |
 | <kbd>Shift</kbd>+<kbd>O</kbd> | Insert a new line above the cursor           |
+|    <kbd>R</kbd> + any char    | Replace the char under the cursor            |
 | <kbd>Ctrl</kbd>+<kbd>D</kbd>  | Fast jump downward                           |
 | <kbd>Ctrl</kbd>+<kbd>U</kbd>  | Fast jump upward                             |
 |         <kbd>D</kbd>          | Delete under cursor                          |
