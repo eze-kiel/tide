@@ -1,6 +1,7 @@
 package editor
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"strings"
@@ -18,6 +19,8 @@ const (
 	VisualMode = iota
 	EditMode
 	CommandMode
+
+	LineNumberWidth = 5
 )
 
 var autoSaveOnSwitch = true
@@ -84,6 +87,7 @@ func New() (*Editor, error) {
 
 func (e *Editor) Run() error {
 	signal.Notify(e.sigs, syscall.SIGWINCH)
+
 	// stuff done by this goroutine should be protected by a mutex so we
 	// do not update the size and read the values at the same time
 	go func() {
@@ -94,9 +98,9 @@ func (e *Editor) Run() error {
 
 	e.Width, e.Height = e.Screen.Size()
 	e.fastJumpLength = (e.Height / 3)
+
 	for {
 		e.Screen.Clear()
-
 		e.RenderBuffer = e.InternalBuffer.Translate()
 		lines := e.RenderBuffer.SplitLines()
 
@@ -106,24 +110,51 @@ func (e *Editor) Run() error {
 					Background(tcell.ColorBlack))
 			}
 		}
+
 		for i := e.OffsetY; i < len(lines) && i < e.OffsetY+e.Height-2; i++ {
+			lineNumStr := fmt.Sprintf("%*d ", LineNumberWidth-1, i+1)
+			style := tcell.StyleDefault.
+				Background(tcell.ColorBlack).
+				Foreground(tcell.ColorWhiteSmoke)
+
+			if i == e.InternalCursor.Y {
+				style = style.
+					Background(tcell.ColorDarkOliveGreen).
+					Foreground(tcell.ColorWhiteSmoke).
+					Bold(true)
+			}
+			for j, r := range lineNumStr {
+				if j < LineNumberWidth {
+					e.Screen.SetContent(j, i-e.OffsetY, r, nil, tcell.StyleDefault.
+						Background(tcell.ColorBlack).
+						Foreground(tcell.ColorWhiteSmoke))
+				}
+			}
+
+			for j, r := range lineNumStr {
+				if j < LineNumberWidth {
+					e.Screen.SetContent(j, i-e.OffsetY, r, nil, style)
+				}
+			}
+
 			l := lines[i]
-			for j := e.OffsetX; j < len(l) && j < e.OffsetX+e.Width; j++ {
-				e.Screen.SetContent(j-e.OffsetX, i-e.OffsetY, rune(l[j]), nil, tcell.StyleDefault.
+			for j := e.OffsetX; j < len(l) && j < e.OffsetX+e.Width-LineNumberWidth; j++ {
+				e.Screen.SetContent(LineNumberWidth+(j-e.OffsetX), i-e.OffsetY, rune(l[j]), nil, tcell.StyleDefault.
 					Background(tcell.ColorBlack).
 					Foreground(tcell.ColorWhiteSmoke))
 			}
 		}
 
 		if e.Selection.Content != "" {
-			for j := e.Selection.StartX + e.OffsetX; j < e.Selection.EndX && j < e.OffsetX+e.Width; j++ {
-				e.Screen.SetContent(j-e.OffsetX, e.Selection.Line-e.OffsetY, rune(e.Selection.Content[j]), nil, tcell.StyleDefault.
-					Background(tcell.ColorBlack).
-					Foreground(tcell.ColorWhiteSmoke).Reverse(true))
+			for j := e.Selection.StartX; j < e.Selection.EndX && j-e.OffsetX < e.Width-LineNumberWidth; j++ {
+				if j >= e.OffsetX {
+					e.Screen.SetContent(LineNumberWidth+(j-e.OffsetX), e.Selection.Line-e.OffsetY, rune(e.Selection.Content[j-e.OffsetX]), nil, tcell.StyleDefault.
+						Background(tcell.ColorDarkOliveGreen).
+						Foreground(tcell.ColorWhiteSmoke))
+				}
 			}
 		}
 
-		// the switch below could be simplified?
 		switch e.Mode {
 		case EditMode:
 			for i, r := range str.EditMode {
@@ -143,7 +174,6 @@ func (e *Editor) Run() error {
 					Background(tcell.ColorBlack).
 					Foreground(tcell.ColorWhiteSmoke))
 			}
-
 			e.Screen.SetContent(0, e.Height-1, ':', nil, tcell.StyleDefault.
 				Background(tcell.ColorBlack).
 				Foreground(tcell.ColorWhiteSmoke))
@@ -177,7 +207,7 @@ func (e *Editor) Run() error {
 		if e.Mode == CommandMode {
 			e.Screen.ShowCursor(len(e.CommandBuffer)+1, e.Height-1)
 		} else {
-			e.Screen.ShowCursor(e.RenderCursor.X-e.OffsetX, e.RenderCursor.Y-e.OffsetY)
+			e.Screen.ShowCursor(LineNumberWidth+(e.RenderCursor.X-e.OffsetX), e.RenderCursor.Y-e.OffsetY)
 		}
 		e.Screen.Show()
 
@@ -301,8 +331,10 @@ func (e *Editor) handleScrolling() {
 	if e.RenderCursor.Y >= e.OffsetY+e.Height-2 {
 		e.OffsetY = e.RenderCursor.Y - (e.Height - 3)
 	}
-	if e.RenderCursor.X >= e.OffsetX+e.Width {
-		e.OffsetX = e.RenderCursor.X - e.Width + 1
+
+	// adjust horizontal scrolling to account for line number width
+	if e.RenderCursor.X >= e.OffsetX+e.Width-LineNumberWidth {
+		e.OffsetX = e.RenderCursor.X - (e.Width - LineNumberWidth) + 1
 	}
 	if e.RenderCursor.X < e.OffsetX {
 		e.OffsetX = e.RenderCursor.X

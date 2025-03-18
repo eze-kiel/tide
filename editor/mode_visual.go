@@ -14,12 +14,16 @@ func (e *Editor) visualModeRoutine() {
 		start = time.Now()
 		switch ev.Key() {
 		case tcell.KeyRight:
+			e.cancelSelection()
 			e.moveInternalCursor(1, 0)
 		case tcell.KeyLeft:
+			e.cancelSelection()
 			e.moveInternalCursor(-1, 0)
 		case tcell.KeyDown:
+			e.cancelSelection()
 			e.moveInternalCursor(0, 1)
 		case tcell.KeyUp:
+			e.cancelSelection()
 			e.moveInternalCursor(0, -1)
 		case tcell.KeyCtrlU:
 			e.moveInternalCursor(0, -e.fastJumpLength)
