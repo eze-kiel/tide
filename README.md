@@ -1,6 +1,6 @@
 # tide
 
-_my own minimalist text editor_
+*A tool to $(echo "tide" | rev) code*
 
 <p align="center">
   <img src="https://github.com/eze-kiel/tide/blob/main/docs/screenshot.png?raw=true" />
