@@ -69,8 +69,6 @@ $ tide [filename]
 |       `q!`, `quit!`        | Force quit the editor                     |
 | `w [file]`, `write [file]` | Write changes to file                     |
 |  `wq [file]`, `x [file]`   | Write changes to file and quit the editor |
-|            `ge`            | Go to the end of the file                 |
-|            `gt`            | Go to the top of the file                 |
 
 ## License
 
