@@ -1,6 +1,11 @@
 package tracing
 
-import "time"
+import (
+	"fmt"
+	"os"
+	"strings"
+	"time"
+)
 
 type Tracing struct {
 	Elapsed time.Duration
@@ -29,6 +34,9 @@ const (
 	MoveCR
 	MoveCU
 	MoveCD
+
+	// misc
+	SwitchMode
 )
 
 var Actions = []string{
@@ -47,4 +55,15 @@ var Actions = []string{
 	MoveCR: "MoveCursorRight",
 	MoveCU: "MoveCursorUp",
 	MoveCD: "MoveCursorDown",
+
+	// misc
+	SwitchMode: "SwitchMode",
+}
+
+func (t Tracing) Dump() error {
+	var out []string
+	for _, t := range t.Traces {
+		out = append(out, fmt.Sprintf("%s,%s,%d", t.Kind, t.Value, t.Duration))
+	}
+	return os.WriteFile("/tmp/tide.trace", []byte(strings.Join(out, "\n")), 0644)
 }

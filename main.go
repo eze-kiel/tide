@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 
 	"github.com/eze-kiel/tide/editor"
@@ -14,18 +15,17 @@ func main() {
 
 	e, err := editor.New()
 	if err != nil {
-		e.Screen.Fini()
-		panic(err)
+		e.Crash(err)
 	}
 
 	switch trace {
+	case "":
 	case "exec":
 		e.TraceExec = true
 	case "all":
 		e.TraceAll = true
 	default:
-		e.Screen.Fini()
-		panic("trace " + trace + " is not supported")
+		e.Crash(errors.New("trace " + trace + " is not supported"))
 	}
 
 	if len(flag.Args()) > 0 {
@@ -37,13 +37,11 @@ func main() {
 	if file.Exists(e.Filename) {
 		e.InternalBuffer.Data, err = file.Read(e.Filename)
 		if err != nil {
-			e.Screen.Fini()
-			panic(err)
+			e.Crash(err)
 		}
 	}
 
 	if err := e.Run(); err != nil {
-		e.Screen.Fini()
-		panic(err)
+		e.Crash(err)
 	}
 }

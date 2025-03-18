@@ -186,8 +186,19 @@ func (e *Editor) SwitchMode() {
 
 // properly quit the editor
 func (e Editor) Quit() {
+	if e.TraceAll {
+		if err := e.tracing.Dump(); err != nil {
+			e.Crash(err)
+		}
+	}
 	e.Screen.Fini()
 	os.Exit(0)
+}
+
+// crash properly when possible
+func (e Editor) Crash(err error) {
+	e.Screen.Fini()
+	panic(err)
 }
 
 // map internal buffer position to render buffer position
