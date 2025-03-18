@@ -36,7 +36,7 @@ func (e *Editor) editModeRoutine() {
 			e.insertRune('\t')
 		}
 	}
-	if e.PerfAnalysis {
+	if e.perfAnalysis {
 		e.metadata.Elapsed = time.Since(start)
 	}
 }

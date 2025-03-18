@@ -49,7 +49,7 @@ type Editor struct {
 	*/
 	fastJumpLength   int  // how far you go when you hit D or U in VISU mode
 	autoSaveOnSwitch bool // auto save when going from EDIT to VISU modes
-	PerfAnalysis     bool
+	perfAnalysis     bool
 }
 
 func New() (*Editor, error) {
@@ -148,7 +148,7 @@ func (e *Editor) Run() error {
 			}
 		}
 
-		if e.PerfAnalysis {
+		if e.perfAnalysis {
 			for i, r := range e.metadata.Elapsed.String() {
 				e.Screen.SetContent(e.Width-len(e.metadata.Elapsed.String())+i, e.Height-2, r, nil,
 					tcell.StyleDefault.

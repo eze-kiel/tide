@@ -58,7 +58,7 @@ func (e *Editor) commandModeRoutine() {
 			e.CommandCursorPos = len(e.CommandBuffer)
 		}
 	}
-	if e.PerfAnalysis {
+	if e.perfAnalysis {
 		e.metadata.Elapsed = time.Since(start)
 	}
 }
