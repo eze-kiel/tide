@@ -38,6 +38,14 @@ type Editor struct {
 	CommandBuffer    string
 	CommandCursorPos int
 
+	Selection struct {
+		Line         int
+		StartX, EndX int
+		Content      string
+	}
+
+	Clipboard string
+
 	StatusMsg     string
 	StatusTimeout int
 	fileChanged   bool
@@ -104,6 +112,14 @@ func (e *Editor) Run() error {
 				e.Screen.SetContent(j-e.OffsetX, i-e.OffsetY, rune(l[j]), nil, tcell.StyleDefault.
 					Background(tcell.ColorBlack).
 					Foreground(tcell.ColorWhiteSmoke))
+			}
+		}
+
+		if e.Selection.Content != "" {
+			for j := e.Selection.StartX + e.OffsetX; j < e.Selection.EndX && j < e.OffsetX+e.Width; j++ {
+				e.Screen.SetContent(j-e.OffsetX, e.Selection.Line-e.OffsetY, rune(e.Selection.Content[j]), nil, tcell.StyleDefault.
+					Background(tcell.ColorBlack).
+					Foreground(tcell.ColorWhiteSmoke).Reverse(true))
 			}
 		}
 
@@ -533,4 +549,146 @@ func (e *Editor) replaceRuneUnder() {
 			e.insertRune(ev.Rune())
 		}
 	}
+}
+
+func (e *Editor) selectLine() {
+	lines := e.InternalBuffer.SplitLines()
+
+	if len(lines) == 0 {
+		return
+	}
+
+	y := e.InternalCursor.Y
+	e.Selection.Content = strings.ReplaceAll(lines[y], "\t", strings.Repeat(buffer.TAB_SYMBOL, buffer.TAB_SIZE))
+	e.Selection.StartX = e.OffsetX
+	e.Selection.EndX = e.OffsetX + len(e.Selection.Content)
+	e.Selection.Line = y
+}
+
+func (e *Editor) cancelSelection() {
+	lines := e.InternalBuffer.SplitLines()
+
+	if len(lines) == 0 {
+		return
+	}
+
+	e.Selection = struct {
+		Line    int
+		StartX  int
+		EndX    int
+		Content string
+	}{}
+}
+
+func (e *Editor) copySelection() {
+	e.Clipboard = e.Selection.Content
+}
+
+func (e *Editor) deleteSelection() {
+	if e.Selection.Content == "" {
+		return
+	}
+
+	lines := e.InternalBuffer.SplitLines()
+	y := e.Selection.Line
+
+	if y < 0 || y >= len(lines) {
+		return
+	}
+
+	startX := e.renderToInternalX(e.Selection.StartX, y)
+	endX := e.renderToInternalX(e.Selection.EndX, y)
+
+	currentLine := lines[y]
+
+	if startX < 0 {
+		startX = 0
+	}
+	if startX > len(currentLine) {
+		startX = len(currentLine)
+	}
+
+	if endX < 0 {
+		endX = 0
+	}
+	if endX > len(currentLine) {
+		endX = len(currentLine)
+	}
+
+	if startX >= endX {
+		return
+	}
+
+	newLine := currentLine[:startX] + currentLine[endX:]
+	lines[y] = newLine
+	e.updateBufferFromLines(lines)
+
+	e.InternalCursor.X = startX
+	e.InternalCursor.Y = y
+	e.updateRenderCursor()
+
+	e.Selection.Content = ""
+}
+
+func (e *Editor) renderToInternalX(renderX, y int) int {
+
+	lines := e.InternalBuffer.SplitLines()
+	if y < 0 || y >= len(lines) {
+		return -1
+	}
+	line := lines[y]
+
+	internalX := 0
+	renderCol := 0
+
+	for i := 0; i < len(line); i++ {
+		if line[i] == '\t' {
+			tabStop := (renderCol/buffer.TAB_SIZE + 1) * buffer.TAB_SIZE
+			if renderX < tabStop {
+				return internalX
+			}
+			renderCol = tabStop
+		} else {
+			renderCol++
+		}
+
+		if renderCol > renderX {
+			return internalX
+		}
+		internalX++
+
+	}
+	return internalX
+
+}
+
+func (e *Editor) pasteUnder() {
+	if e.Clipboard == "" {
+		return
+	}
+
+	lines := e.InternalBuffer.SplitLines()
+
+	if len(lines) == 0 {
+		e.InternalBuffer.Data = e.Clipboard
+		e.InternalCursor.X = 0
+		e.InternalCursor.Y = 1
+		e.updateRenderCursor()
+		return
+	}
+
+	y := e.InternalCursor.Y
+
+	newLines := make([]string, 0, len(lines)+1)
+	newLines = append(newLines, lines[:y+1]...)
+	newLines = append(newLines, e.Clipboard)
+	if y+1 < len(lines) {
+		newLines = append(newLines, lines[y+1:]...)
+	}
+	e.cancelSelection()
+	e.updateBufferFromLines(newLines)
+
+	e.InternalCursor.X = 0
+	e.InternalCursor.Y = y + 1
+	e.updateRenderCursor()
 }

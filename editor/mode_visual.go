@@ -28,7 +28,11 @@ func (e *Editor) visualModeRoutine() {
 		case tcell.KeyRune:
 			switch ev.Rune() {
 			case 'd':
-				e.deleteRuneAtCursor()
+				if e.Selection.Content == "" {
+					e.deleteRuneAtCursor()
+				} else {
+					e.deleteSelection()
+				}
 			case 'e':
 				e.moveInternalCursor(0, len(e.InternalBuffer.Data)-1)
 			case 't':
@@ -49,6 +53,14 @@ func (e *Editor) visualModeRoutine() {
 				e.SwitchMode()
 			case 'r':
 				e.replaceRuneUnder()
+			case 'x':
+				e.selectLine()
+			case 'a':
+				e.cancelSelection()
+			case 'y':
+				e.copySelection()
+			case 'p':
+				e.pasteUnder()
 			}
 		}
 	}

@@ -41,20 +41,25 @@ $ tide [filename]
 
 #### Visual mode
 
-|           Shortcut            | Action                                       |
-| :---------------------------: | :------------------------------------------- |
-|         <kbd>:</kbd>          | Open the command menu                        |
-|         <kbd>I</kbd>          | Start inserting (switch to Edit mode)        |
-|         <kbd>H</kbd>          | Move the cursor to the beginning of the line |
-|         <kbd>L</kbd>          | Move the cursor to the end of the line       |
-|         <kbd>T</kbd>          | Move the cursor to the top of the file       |
-|         <kbd>E</kbd>          | Move the cursor to the end of the file       |
-|         <kbd>O</kbd>          | Insert a new line under the cursor           |
-| <kbd>Shift</kbd>+<kbd>O</kbd> | Insert a new line above the cursor           |
-|    <kbd>R</kbd> + any char    | Replace the char under the cursor            |
-| <kbd>Ctrl</kbd>+<kbd>D</kbd>  | Fast jump downward                           |
-| <kbd>Ctrl</kbd>+<kbd>U</kbd>  | Fast jump upward                             |
-|         <kbd>D</kbd>          | Delete under cursor                          |
+|           Shortcut            | Action                                         |
+| :---------------------------: | :--------------------------------------------- |
+|         <kbd>:</kbd>          | Open the command menu                          |
+|         <kbd>I</kbd>          | Start inserting (switch to Edit mode)          |
+|         <kbd>H</kbd>          | Move the cursor to the beginning of the line   |
+|         <kbd>L</kbd>          | Move the cursor to the end of the line         |
+|         <kbd>T</kbd>          | Move the cursor to the top of the file         |
+|         <kbd>E</kbd>          | Move the cursor to the end of the file         |
+|         <kbd>O</kbd>          | Insert a new line under the cursor             |
+| <kbd>Shift</kbd>+<kbd>O</kbd> | Insert a new line above the cursor             |
+|    <kbd>R</kbd> + any char    | Replace the char under the cursor              |
+|         <kbd>D</kbd>          | No selection: delete the char under the cursor |
+|         <kbd>D</kbd>          | Selection: delete the selection                |
+|         <kbd>X</kbd>          | Select current line                            |
+|         <kbd>A</kbd>          | Cancel selection                               |
+|         <kbd>Y</kbd>          | Put selection to the clipboard                 |
+|         <kbd>P</kbd>          | Paste selection under                          |
+| <kbd>Ctrl</kbd>+<kbd>D</kbd>  | Fast jump downward                             |
+| <kbd>Ctrl</kbd>+<kbd>U</kbd>  | Fast jump upward                               |
 
 #### Edit mode
 
