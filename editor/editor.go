@@ -97,7 +97,7 @@ func (e *Editor) Run() error {
 	for {
 		e.Screen.Clear()
 
-		e.RenderBuffer = e.InternalBuffer.Render()
+		e.RenderBuffer = e.InternalBuffer.Translate()
 		lines := e.RenderBuffer.SplitLines()
 
 		for y := range e.Height {

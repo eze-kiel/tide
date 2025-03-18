@@ -19,7 +19,7 @@ func (b Buffer) SplitLines() []string {
 
 // this function translates the internal buffer to something human-readable (\t
 // are multiple spaces, ...)
-func (b Buffer) Render() Buffer {
+func (b Buffer) Translate() Buffer {
 	tmp := strings.ReplaceAll(b.Data, "\t", strings.Repeat(TAB_SYMBOL, TAB_SIZE))
 	return Buffer{Data: tmp}
 }
