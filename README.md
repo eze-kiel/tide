@@ -45,8 +45,8 @@ $ tide [filename]
 | :---------------------------: | :------------------------------------------- |
 |         <kbd>:</kbd>          | Open the command menu                        |
 |         <kbd>I</kbd>          | Start inserting (switch to Edit mode)        |
-|         <kbd>L</kbd>          | Move the cursor to the end of the line       |
 |         <kbd>H</kbd>          | Move the cursor to the beginning of the line |
+|         <kbd>L</kbd>          | Move the cursor to the end of the line       |
 |         <kbd>O</kbd>          | Insert a new line under the cursor           |
 | <kbd>Shift</kbd>+<kbd>O</kbd> | Insert a new line above the cursor           |
 | <kbd>Ctrl</kbd>+<kbd>D</kbd>  | Fast jump downward                           |

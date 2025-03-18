@@ -29,6 +29,10 @@ func (e *Editor) visualModeRoutine() {
 			switch ev.Rune() {
 			case 'd':
 				e.deleteRuneAtCursor()
+			case 'h':
+				e.moveInternalCursor(-1000, 0) // hacky lol
+			case 'l':
+				e.moveInternalCursor(1000, 0) // hacky lol
 			case 'o':
 				e.insertNewlineUnder()
 				e.SwitchMode()
