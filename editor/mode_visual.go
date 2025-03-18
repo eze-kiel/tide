@@ -50,7 +50,7 @@ func (e *Editor) visualModeRoutine() {
 			}
 		}
 	}
-	if e.perfAnalysis {
-		e.metadata.Elapsed = time.Since(start)
+	if e.TraceExec {
+		e.tracing.Elapsed = time.Since(start)
 	}
 }

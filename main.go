@@ -8,8 +8,8 @@ import (
 )
 
 func main() {
-	var perf bool
-	flag.BoolVar(&perf, "perf", false, "start with performance analysis parameters")
+	var trace string
+	flag.StringVar(&trace, "trace", "", "trace program execution (can be exec, all)")
 	flag.Parse()
 
 	e, err := editor.New()
@@ -17,7 +17,16 @@ func main() {
 		e.Screen.Fini()
 		panic(err)
 	}
-	e.PerfAnalysis = perf
+
+	switch trace {
+	case "exec":
+		e.TraceExec = true
+	case "all":
+		e.TraceAll = true
+	default:
+		e.Screen.Fini()
+		panic("trace " + trace + " is not supported")
+	}
 
 	if len(flag.Args()) > 0 {
 		e.Filename = flag.Arg(0)

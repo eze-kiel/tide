@@ -9,8 +9,8 @@ import (
 	"github.com/eze-kiel/tide/buffer"
 	"github.com/eze-kiel/tide/cursor"
 	"github.com/eze-kiel/tide/file"
-	"github.com/eze-kiel/tide/metadata"
 	"github.com/eze-kiel/tide/str"
+	"github.com/eze-kiel/tide/tracing"
 	"github.com/gdamore/tcell/v2"
 )
 
@@ -42,14 +42,15 @@ type Editor struct {
 	StatusTimeout int
 	fileChanged   bool
 
-	metadata metadata.Metadata
+	tracing   tracing.Tracing
+	TraceExec bool
+	TraceAll  bool
 
 	/*
 		stuff that will be configurable in the future starts here
 	*/
 	fastJumpLength   int  // how far you go when you hit D or U in VISU mode
 	autoSaveOnSwitch bool // auto save when going from EDIT to VISU modes
-	perfAnalysis     bool
 }
 
 func New() (*Editor, error) {
@@ -148,9 +149,9 @@ func (e *Editor) Run() error {
 			}
 		}
 
-		if e.perfAnalysis {
-			for i, r := range e.metadata.Elapsed.String() {
-				e.Screen.SetContent(e.Width-len(e.metadata.Elapsed.String())+i, e.Height-2, r, nil,
+		if e.TraceExec {
+			for i, r := range e.tracing.Elapsed.String() {
+				e.Screen.SetContent(e.Width-len(e.tracing.Elapsed.String())+i, e.Height-2, r, nil,
 					tcell.StyleDefault.
 						Background(tcell.ColorDarkRed).
 						Bold(true))
