@@ -522,3 +522,15 @@ func (e *Editor) SaveToFile(autosave bool) {
 	}
 	e.StatusTimeout = 5
 }
+
+func (e *Editor) replaceRuneUnder() {
+	ev := e.Screen.PollEvent()
+	switch ev := ev.(type) {
+	case *tcell.EventKey:
+		switch ev.Key() {
+		case tcell.KeyRune:
+			e.deleteRuneAtCursor()
+			e.insertRune(ev.Rune())
+		}
+	}
+}

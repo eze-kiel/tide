@@ -47,6 +47,8 @@ func (e *Editor) visualModeRoutine() {
 				e.Mode = CommandMode
 			case 'i':
 				e.SwitchMode()
+			case 'r':
+				e.replaceRuneUnder()
 			}
 		}
 	}
