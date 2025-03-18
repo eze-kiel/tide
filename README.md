@@ -3,7 +3,7 @@
 _my own minimalist text editor_
 
 > [!WARNING]
-> This project is in early development and is probably really buggy.
+> This project is in early development and is probably buggy as hell.
 
 - [tide](#tide)
   - [Usage](#usage)
