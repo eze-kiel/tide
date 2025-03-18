@@ -29,6 +29,12 @@ func (e *Editor) visualModeRoutine() {
 			switch ev.Rune() {
 			case 'd':
 				e.deleteRuneAtCursor()
+			case 'o':
+				e.insertNewlineUnder()
+				e.SwitchMode()
+			case 'O':
+				e.insertNewlineAbove()
+				e.SwitchMode()
 			case ':':
 				e.Mode = CommandMode
 			case 'i':

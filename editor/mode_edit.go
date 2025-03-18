@@ -29,7 +29,7 @@ func (e *Editor) editModeRoutine() {
 		case tcell.KeyRune:
 			e.insertRune(ev.Rune())
 		case tcell.KeyEnter:
-			e.insertNewline()
+			e.insertNewlineAtCursor()
 		case tcell.KeyBackspace2:
 			e.deleteRuneBeforeCursor()
 		case tcell.KeyTab:

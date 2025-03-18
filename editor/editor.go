@@ -314,7 +314,7 @@ func (e *Editor) insertRune(ch rune) {
 }
 
 // insert a newline at the current cursor position
-func (e *Editor) insertNewline() {
+func (e *Editor) insertNewlineAtCursor() {
 	lines := e.InternalBuffer.SplitLines()
 
 	if len(lines) == 0 {
@@ -342,6 +342,60 @@ func (e *Editor) insertNewline() {
 	newLines = append(newLines, lines[:y]...)
 	newLines = append(newLines, firstPart)
 	newLines = append(newLines, secondPart)
+	if y+1 < len(lines) {
+		newLines = append(newLines, lines[y+1:]...)
+	}
+
+	e.updateBufferFromLines(newLines)
+
+	e.InternalCursor.X = 0
+	e.InternalCursor.Y = y + 1
+	e.updateRenderCursor()
+}
+
+// insert a newline above the current cursor position
+func (e *Editor) insertNewlineAbove() {
+	lines := e.InternalBuffer.SplitLines()
+
+	if len(lines) == 0 {
+		e.InternalBuffer.Data = "\n"
+		e.InternalCursor.X = 0
+		e.InternalCursor.Y = 1
+		e.updateRenderCursor()
+		return
+	}
+
+	y := e.InternalCursor.Y
+
+	newLines := make([]string, 0, len(lines)+1)
+	newLines = append(newLines, lines[:y]...)
+	newLines = append(newLines, "")
+	newLines = append(newLines, lines[y:]...)
+
+	e.updateBufferFromLines(newLines)
+
+	e.InternalCursor.X = 0
+	e.InternalCursor.Y = y
+	e.updateRenderCursor()
+}
+
+// insert a newline under the current cursor position
+func (e *Editor) insertNewlineUnder() {
+	lines := e.InternalBuffer.SplitLines()
+
+	if len(lines) == 0 {
+		e.InternalBuffer.Data = "\n"
+		e.InternalCursor.X = 0
+		e.InternalCursor.Y = 1
+		e.updateRenderCursor()
+		return
+	}
+
+	y := e.InternalCursor.Y
+
+	newLines := make([]string, 0, len(lines)+1)
+	newLines = append(newLines, lines[:y+1]...)
+	newLines = append(newLines, "")
 	if y+1 < len(lines) {
 		newLines = append(newLines, lines[y+1:]...)
 	}
