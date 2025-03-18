@@ -29,6 +29,10 @@ func (e *Editor) visualModeRoutine() {
 			switch ev.Rune() {
 			case 'd':
 				e.deleteRuneAtCursor()
+			case 'e':
+				e.moveInternalCursor(0, len(e.InternalBuffer.Data)-1)
+			case 't':
+				e.moveInternalCursor(0, -len(e.InternalBuffer.Data)) // the overflow is handled in another place, but hacky
 			case 'h':
 				e.moveInternalCursor(-1000, 0) // hacky lol
 			case 'l':

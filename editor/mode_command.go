@@ -103,14 +103,6 @@ func (e *Editor) executeCommand(cmd string) {
 		e.SaveToFile(false)
 		e.Quit()
 
-	case "ge":
-		e.moveInternalCursor(0, len(e.InternalBuffer.Data)-1)
-		e.exitCommandMode()
-
-	case "gt":
-		e.moveInternalCursor(0, -len(e.InternalBuffer.Data)) // the overflow is handled in another place
-		e.exitCommandMode()
-
 	default:
 		e.StatusMsg = str.UnknownCommandErr + parts[0]
 		e.StatusTimeout = 5
