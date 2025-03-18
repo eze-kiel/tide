@@ -62,6 +62,8 @@ func (e *Editor) visualModeRoutine() {
 			case 'p':
 				e.pasteUnder()
 			}
+		case tcell.KeyCtrlC:
+			e.toggleCommentLine()
 		}
 	}
 	if e.TraceExec {

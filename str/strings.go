@@ -9,4 +9,6 @@ const (
 	CannotSaveErr     = "Cannot save: "
 	FileModified      = "File has been modified, override with q! or save"
 	UnknownCommandErr = "Unknown command: "
+
+	Comment = "//"
 )

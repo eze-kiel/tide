@@ -631,7 +631,6 @@ func (e *Editor) deleteSelection() {
 }
 
 func (e *Editor) renderToInternalX(renderX, y int) int {
-
 	lines := e.InternalBuffer.SplitLines()
 	if y < 0 || y >= len(lines) {
 		return -1
@@ -690,5 +689,45 @@ func (e *Editor) pasteUnder() {
 
 	e.InternalCursor.X = 0
 	e.InternalCursor.Y = y + 1
+	e.updateRenderCursor()
+}
+
+func (e *Editor) toggleCommentLine() {
+	lines := e.InternalBuffer.SplitLines()
+
+	if len(lines) == 0 {
+		e.InternalCursor.X = 0
+		e.InternalCursor.Y = 1
+		e.updateRenderCursor()
+		return
+	}
+
+	y := e.InternalCursor.Y
+
+	// todo: use specific comment based on the file extension if known,
+	// otherwise go to default
+
+	newLines := make([]string, 0, len(lines)+1)
+	parts := strings.Fields(lines[y])
+	if len(parts) == 0 || !strings.Contains(parts[0], str.Comment) {
+		// comment the line
+		newLines = append(newLines, lines[:y]...)
+		newLines = append(newLines, strings.Join([]string{str.Comment, lines[y]}, " "))
+		if y+1 < len(lines) {
+			newLines = append(newLines, lines[y+1:]...)
+		}
+	} else {
+		// uncomment the line
+		newLines = append(newLines, lines[:y]...)
+		newLines = append(newLines, strings.Replace(lines[y], str.Comment+" ", "", 1))
+		if y+1 < len(lines) {
+			newLines = append(newLines, lines[y+1:]...)
+		}
+	}
+
+	e.updateBufferFromLines(newLines)
+
+	e.InternalCursor.X = len(lines[y]) + len(str.Comment)
+	e.InternalCursor.Y = y
 	e.updateRenderCursor()
 }

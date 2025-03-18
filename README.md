@@ -58,6 +58,7 @@ $ tide [filename]
 |         <kbd>A</kbd>          | Cancel selection                               |
 |         <kbd>Y</kbd>          | Put selection to the clipboard                 |
 |         <kbd>P</kbd>          | Paste selection under                          |
+| <kbd>Ctrl</kbd>+<kbd>C</kbd>  | Toggle comment on the line                     |
 | <kbd>Ctrl</kbd>+<kbd>D</kbd>  | Fast jump downward                             |
 | <kbd>Ctrl</kbd>+<kbd>U</kbd>  | Fast jump upward                               |
 
