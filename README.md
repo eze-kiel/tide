@@ -2,6 +2,10 @@
 
 _my own minimalist text editor_
 
+<p align="center">
+  <img src="https://github.com/eze-kiel/tide/blob/main/docs/screenshot.png?raw=true" />
+</p>
+
 > [!WARNING]
 > This project is in early development and is probably buggy as hell.
 
