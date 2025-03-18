@@ -91,8 +91,8 @@ func (e *Editor) Run() error {
 		e.RenderBuffer = e.InternalBuffer.Render()
 		lines := e.RenderBuffer.SplitLines()
 
-		for y := 0; y < e.Height; y++ {
-			for x := 0; x < e.Width; x++ {
+		for y := range e.Height {
+			for x := range e.Width {
 				e.Screen.SetContent(x, y, rune(0), nil, tcell.StyleDefault.
 					Background(tcell.ColorBlack))
 			}
@@ -121,7 +121,7 @@ func (e *Editor) Run() error {
 					Foreground(tcell.ColorWhiteSmoke))
 			}
 		case CommandMode:
-			for i := 0; i < e.Width; i++ {
+			for i := range e.Width {
 				e.Screen.SetContent(i, e.Height-1, rune(0), nil, tcell.StyleDefault.
 					Background(tcell.ColorBlack).
 					Foreground(tcell.ColorWhiteSmoke))
@@ -209,7 +209,7 @@ func (e *Editor) internalToRenderPos(x, y int) (rx, ry int) {
 	}
 
 	rx = 0
-	for i := 0; i < x; i++ {
+	for i := range x {
 		if lines[y][i] == '\t' {
 			// align to the next tab stop
 			rx += buffer.TAB_SIZE - (rx % buffer.TAB_SIZE)
