@@ -83,7 +83,7 @@ func (e *Editor) executeCommand(cmd string) {
 		e.StatusMsg = str.FileModified
 		e.StatusTimeout = DefaultMsgTimeout
 
-	case "q!", "quit!":
+	case "q!", "quit!", "qq":
 		e.Quit()
 
 	case "w", "write":

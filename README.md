@@ -78,7 +78,7 @@ $ tide [filename]
 |          Command           | Action                                    |
 | :------------------------: | :---------------------------------------- |
 |        `q`, `quit`         | Quit the editor                           |
-|       `q!`, `quit!`        | Force quit the editor                     |
+|    `q!`, `quit!`, `qq`     | Force quit the editor                     |
 | `w [file]`, `write [file]` | Write changes to file                     |
 |  `wq [file]`, `x [file]`   | Write changes to file and quit the editor |
 
