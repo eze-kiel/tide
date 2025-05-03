@@ -1,17 +1,13 @@
 package editor
 
 import (
-	"time"
-
 	"github.com/gdamore/tcell/v2"
 )
 
 func (e *Editor) visualModeRoutine() {
-	var start time.Time
 	ev := e.Screen.PollEvent()
 	switch ev := ev.(type) {
 	case *tcell.EventKey:
-		start = time.Now()
 		switch ev.Key() {
 		case tcell.KeyRight:
 			e.cancelSelection()
@@ -65,12 +61,11 @@ func (e *Editor) visualModeRoutine() {
 				e.copySelection()
 			case 'p':
 				e.pasteUnder()
+			case 'u':
+				e.undo()
 			}
 		case tcell.KeyCtrlC:
 			e.toggleCommentLine()
 		}
-	}
-	if e.TraceExec {
-		e.tracing.Elapsed = time.Since(start)
 	}
 }

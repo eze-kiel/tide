@@ -2,18 +2,15 @@ package editor
 
 import (
 	"strings"
-	"time"
 
 	"github.com/eze-kiel/tide/str"
 	"github.com/gdamore/tcell/v2"
 )
 
 func (e *Editor) commandModeRoutine() {
-	var start time.Time
 	ev := e.Screen.PollEvent()
 	switch ev := ev.(type) {
 	case *tcell.EventKey:
-		start = time.Now()
 		switch ev.Key() {
 		case tcell.KeyEsc:
 			e.exitCommandMode()
@@ -61,9 +58,6 @@ func (e *Editor) commandModeRoutine() {
 			e.CommandCursorPos = len(e.CommandBuffer)
 		}
 	}
-	if e.TraceExec {
-		e.tracing.Elapsed = time.Since(start)
-	}
 }
 
 func (e *Editor) exitCommandMode() {
@@ -87,7 +81,7 @@ func (e *Editor) executeCommand(cmd string) {
 			e.Quit()
 		}
 		e.StatusMsg = str.FileModified
-		e.StatusTimeout = 5
+		e.StatusTimeout = DefaultMsgTimeout
 
 	case "q!", "quit!":
 		e.Quit()
@@ -96,18 +90,18 @@ func (e *Editor) executeCommand(cmd string) {
 		if len(parts) > 1 {
 			e.Filename = parts[1]
 		}
-		e.SaveToFile(false)
+		e.SaveToFile()
 		e.exitCommandMode()
 
 	case "wq", "x":
 		if len(parts) > 1 {
 			e.Filename = parts[1]
 		}
-		e.SaveToFile(false)
+		e.SaveToFile()
 		e.Quit()
 
 	default:
 		e.StatusMsg = str.UnknownCommandErr + parts[0]
-		e.StatusTimeout = 5
+		e.StatusTimeout = DefaultMsgTimeout
 	}
 }

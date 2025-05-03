@@ -7,11 +7,11 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/eze-kiel/tide/actions"
 	"github.com/eze-kiel/tide/buffer"
 	"github.com/eze-kiel/tide/cursor"
 	"github.com/eze-kiel/tide/file"
 	"github.com/eze-kiel/tide/str"
-	"github.com/eze-kiel/tide/tracing"
 	"github.com/gdamore/tcell/v2"
 )
 
@@ -23,7 +23,7 @@ const (
 	LineNumberWidth = 5
 )
 
-var autoSaveOnSwitch = true
+var DefaultMsgTimeout = 5
 
 type Editor struct {
 	sigs chan os.Signal
@@ -37,6 +37,8 @@ type Editor struct {
 
 	InternalBuffer, RenderBuffer buffer.Buffer
 	InternalCursor, RenderCursor cursor.Cursor
+
+	PreviousActions []actions.Action // hold the previous internalBuffer changes, for the undo mechanism
 
 	CommandBuffer    string
 	CommandCursorPos int
@@ -52,10 +54,6 @@ type Editor struct {
 	StatusMsg     string
 	StatusTimeout int
 	fileChanged   bool
-
-	tracing   tracing.Tracing
-	TraceExec bool
-	TraceAll  bool
 
 	/*
 		stuff that will be configurable in the future starts here
@@ -195,15 +193,6 @@ func (e *Editor) Run() error {
 			}
 		}
 
-		if e.TraceExec {
-			for i, r := range e.tracing.Elapsed.String() {
-				e.Screen.SetContent(e.Width-len(e.tracing.Elapsed.String())+i, e.Height-2, r, nil,
-					tcell.StyleDefault.
-						Background(tcell.ColorDarkRed).
-						Bold(true))
-			}
-		}
-
 		if e.Mode == CommandMode {
 			e.Screen.ShowCursor(len(e.CommandBuffer)+1, e.Height-1)
 		} else {
@@ -222,6 +211,7 @@ func (e *Editor) Run() error {
 	}
 }
 
+// big brain time
 // if e.Mode is 1, then e.Mode ^ (EditMode | VisualMode) -> 1 ^ (1 | 2) -> 1 ^ 3 = 2
 // if e.Mode is 2, then e.Mode ^ (EditMode | VisualMode) -> 2 ^ (1 | 2) -> 2 ^ 3 = 1
 func (e *Editor) SwitchMode() {
@@ -232,11 +222,6 @@ func (e *Editor) SwitchMode() {
 
 // properly quit the editor
 func (e Editor) Quit() {
-	if e.TraceAll {
-		if err := e.tracing.Dump(); err != nil {
-			e.Crash(err)
-		}
-	}
 	e.Screen.Fini()
 	os.Exit(0)
 }
@@ -366,6 +351,15 @@ func (e *Editor) insertRune(ch rune) {
 		newLine += currentLine[x:]
 	}
 
+	e.PreviousActions = append(e.PreviousActions, actions.Action{
+		Kind:  actions.Kinds[actions.InsertRune],
+		Value: string(ch),
+		Pos: struct {
+			X int
+			Y int
+		}{x, y},
+	})
+
 	lines[y] = newLine
 	e.updateBufferFromLines(lines)
 
@@ -405,6 +399,15 @@ func (e *Editor) insertNewlineAtCursor() {
 	if y+1 < len(lines) {
 		newLines = append(newLines, lines[y+1:]...)
 	}
+
+	e.PreviousActions = append(e.PreviousActions, actions.Action{
+		Kind:  actions.Kinds[actions.InsertNL],
+		Value: "\n",
+		Pos: struct {
+			X int
+			Y int
+		}{x, y},
+	})
 
 	e.updateBufferFromLines(newLines)
 
@@ -551,6 +554,44 @@ func (e *Editor) deleteRuneAtCursor() {
 	e.updateRenderCursor()
 }
 
+// delete the character at a given position
+func (e *Editor) deleteRuneAt(x, y int) {
+	lines := e.InternalBuffer.SplitLines()
+
+	if len(lines) == 0 {
+		return
+	}
+
+	e.InternalCursor.X = x
+	e.InternalCursor.Y = y
+	currentLine := lines[y]
+
+	// if at end of line but not last line, join with next line
+	if x == len(currentLine) && y < len(lines)-1 {
+		nextLine := lines[y+1]
+
+		newLine := currentLine + nextLine
+
+		newLines := make([]string, 0, len(lines)-1)
+		newLines = append(newLines, lines[:y]...)
+		newLines = append(newLines, newLine)
+		if y+2 < len(lines) {
+			newLines = append(newLines, lines[y+2:]...)
+		}
+
+		e.updateBufferFromLines(newLines)
+	}
+
+	if x < len(currentLine) {
+		newLine := currentLine[:x] + currentLine[x+1:]
+		lines[y] = newLine
+
+		e.updateBufferFromLines(lines)
+	}
+
+	e.updateRenderCursor()
+}
+
 // helper function to update the internal buffer from an array of lines
 func (e *Editor) updateBufferFromLines(lines []string) {
 	e.fileChanged = true
@@ -558,17 +599,17 @@ func (e *Editor) updateBufferFromLines(lines []string) {
 }
 
 // save internal buffer to file
-func (e *Editor) SaveToFile(autosave bool) {
+func (e *Editor) SaveToFile() {
 	if err := file.Write(e.Filename, e.InternalBuffer.Data); err != nil {
 		e.StatusMsg = "Error: " + err.Error()
 	} else {
-		if autosave {
+		if e.autoSaveOnSwitch {
 			e.StatusMsg = str.AutoSavedMsg + e.Filename
 		} else {
 			e.StatusMsg = str.SavedMsg + e.Filename
 		}
 	}
-	e.StatusTimeout = 5
+	e.StatusTimeout = DefaultMsgTimeout
 }
 
 func (e *Editor) replaceRuneUnder() {
@@ -762,4 +803,21 @@ func (e *Editor) toggleCommentLine() {
 	e.InternalCursor.X = len(lines[y]) + len(str.Comment)
 	e.InternalCursor.Y = y
 	e.updateRenderCursor()
+}
+
+func (e *Editor) undo() {
+	if len(e.PreviousActions) == 0 {
+		e.StatusMsg = str.NoMoreUndoMsg
+		e.StatusTimeout = DefaultMsgTimeout
+		return
+	}
+
+	// save the latest action, then drop it
+	prev := e.PreviousActions[len(e.PreviousActions)-1]
+	e.PreviousActions = e.PreviousActions[:len(e.PreviousActions)-1]
+
+	switch prev.Kind {
+	case actions.Kinds[actions.InsertRune], actions.Kinds[actions.InsertNL]:
+		e.deleteRuneAt(prev.Pos.X, prev.Pos.Y)
+	}
 }
