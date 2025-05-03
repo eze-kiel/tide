@@ -719,7 +719,7 @@ func (e *Editor) renderToInternalX(renderX, y int) int {
 	internalX := 0
 	renderCol := 0
 
-	for i := 0; i < len(line); i++ {
+	for i := range len(line) {
 		if line[i] == '\t' {
 			tabStop := (renderCol/buffer.TAB_SIZE + 1) * buffer.TAB_SIZE
 			if renderX < tabStop {
