@@ -55,6 +55,9 @@ type Editor struct {
 	StatusTimeout int
 	fileChanged   bool
 
+	backgroundColor tcell.Color
+	foregroundColor tcell.Color
+
 	/*
 		stuff that will be configurable in the future starts here
 	*/
@@ -68,6 +71,8 @@ func New() (*Editor, error) {
 		Mode:             VisualMode,
 		autoSaveOnSwitch: false,
 		fileChanged:      false,
+		backgroundColor:  tcell.ColorBlack,
+		foregroundColor:  tcell.ColorWhiteSmoke,
 	}
 
 	var err error
@@ -102,30 +107,31 @@ func (e *Editor) Run() error {
 		e.RenderBuffer = e.InternalBuffer.Translate()
 		lines := e.RenderBuffer.SplitLines()
 
+		// set the background color of the whole editor screen
 		for y := range e.Height {
 			for x := range e.Width {
 				e.Screen.SetContent(x, y, rune(0), nil, tcell.StyleDefault.
-					Background(tcell.ColorBlack))
+					Background(e.backgroundColor))
 			}
 		}
 
 		for i := e.OffsetY; i < len(lines) && i < e.OffsetY+e.Height-2; i++ {
 			lineNumStr := fmt.Sprintf("%*d ", LineNumberWidth-1, i+1)
 			style := tcell.StyleDefault.
-				Background(tcell.ColorBlack).
-				Foreground(tcell.ColorWhiteSmoke)
+				Background(e.backgroundColor).
+				Foreground(e.foregroundColor)
 
 			if i == e.InternalCursor.Y {
 				style = style.
 					Background(tcell.ColorDarkOliveGreen).
-					Foreground(tcell.ColorWhiteSmoke).
+					Foreground(e.foregroundColor).
 					Bold(true)
 			}
 			for j, r := range lineNumStr {
 				if j < LineNumberWidth {
 					e.Screen.SetContent(j, i-e.OffsetY, r, nil, tcell.StyleDefault.
-						Background(tcell.ColorBlack).
-						Foreground(tcell.ColorWhiteSmoke))
+						Background(e.backgroundColor).
+						Foreground(e.foregroundColor))
 				}
 			}
 
@@ -138,8 +144,8 @@ func (e *Editor) Run() error {
 			l := lines[i]
 			for j := e.OffsetX; j < len(l) && j < e.OffsetX+e.Width-LineNumberWidth; j++ {
 				e.Screen.SetContent(LineNumberWidth+(j-e.OffsetX), i-e.OffsetY, rune(l[j]), nil, tcell.StyleDefault.
-					Background(tcell.ColorBlack).
-					Foreground(tcell.ColorWhiteSmoke))
+					Background(e.backgroundColor).
+					Foreground(e.foregroundColor))
 			}
 		}
 
@@ -148,7 +154,7 @@ func (e *Editor) Run() error {
 				if j >= e.OffsetX {
 					e.Screen.SetContent(LineNumberWidth+(j-e.OffsetX), e.Selection.Line-e.OffsetY, rune(e.Selection.Content[j-e.OffsetX]), nil, tcell.StyleDefault.
 						Background(tcell.ColorDarkOliveGreen).
-						Foreground(tcell.ColorWhiteSmoke))
+						Foreground(e.foregroundColor))
 				}
 			}
 		}
@@ -158,27 +164,27 @@ func (e *Editor) Run() error {
 			for i, r := range str.EditMode {
 				e.Screen.SetContent(i, e.Height-1, r, nil, tcell.StyleDefault.
 					Background(tcell.ColorDarkOliveGreen).
-					Foreground(tcell.ColorWhiteSmoke))
+					Foreground(e.foregroundColor))
 			}
 		case VisualMode:
 			for i, r := range str.VisualMode {
 				e.Screen.SetContent(i, e.Height-1, r, nil, tcell.StyleDefault.
 					Background(tcell.ColorDarkOliveGreen).
-					Foreground(tcell.ColorWhiteSmoke))
+					Foreground(e.foregroundColor))
 			}
 		case CommandMode:
 			for i := range e.Width {
 				e.Screen.SetContent(i, e.Height-1, rune(0), nil, tcell.StyleDefault.
-					Background(tcell.ColorBlack).
-					Foreground(tcell.ColorWhiteSmoke))
+					Background(e.backgroundColor).
+					Foreground(e.foregroundColor))
 			}
 			e.Screen.SetContent(0, e.Height-1, ':', nil, tcell.StyleDefault.
-				Background(tcell.ColorBlack).
-				Foreground(tcell.ColorWhiteSmoke))
+				Background(e.backgroundColor).
+				Foreground(e.foregroundColor))
 			for i, r := range e.CommandBuffer {
 				e.Screen.SetContent(i+1, e.Height-1, r, nil, tcell.StyleDefault.
-					Background(tcell.ColorBlack).
-					Foreground(tcell.ColorWhiteSmoke))
+					Background(e.backgroundColor).
+					Foreground(e.foregroundColor))
 			}
 		}
 
@@ -187,8 +193,8 @@ func (e *Editor) Run() error {
 			for i, r := range e.StatusMsg {
 				if i < e.Width {
 					e.Screen.SetContent(e.Width-len(e.StatusMsg)+i, e.Height-1, r, nil, tcell.StyleDefault.
-						Background(tcell.ColorBlack).
-						Foreground(tcell.ColorWhiteSmoke))
+						Background(e.backgroundColor).
+						Foreground(e.foregroundColor))
 				}
 			}
 		}
