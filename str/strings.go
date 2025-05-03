@@ -1,8 +1,8 @@
 package str
 
 const (
-	EditMode   = "EDIT"
-	VisualMode = "VISU"
+	EditMode   = "INSERT"
+	VisualMode = "VISUAL"
 
 	SavedMsg          = "Saved to: "
 	AutoSavedMsg      = "Automatically saved to: "
