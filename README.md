@@ -16,7 +16,7 @@
     - [Options](#options)
     - [Shortcuts](#shortcuts)
       - [Visual mode](#visual-mode)
-      - [Edit mode](#edit-mode)
+      - [Insert mode](#insert-mode)
       - [Commands](#commands)
   - [License](#license)
 
@@ -58,7 +58,7 @@ $ tide [options] [filename]
 |           Shortcut            | Action                                         |
 | :---------------------------: | :--------------------------------------------- |
 |         <kbd>:</kbd>          | Open the command menu                          |
-|         <kbd>I</kbd>          | Start inserting (switch to Edit mode)          |
+|         <kbd>I</kbd>          | Start inserting (switch to Insert mode)        |
 |         <kbd>H</kbd>          | Move the cursor to the beginning of the line   |
 |         <kbd>L</kbd>          | Move the cursor to the end of the line         |
 |         <kbd>T</kbd>          | Move the cursor to the top of the file         |
@@ -77,7 +77,7 @@ $ tide [options] [filename]
 | <kbd>Ctrl</kbd>+<kbd>D</kbd>  | Fast jump downward                             |
 | <kbd>Ctrl</kbd>+<kbd>U</kbd>  | Fast jump upward                               |
 
-#### Edit mode
+#### Insert mode
 
 |    Shortcut    | Action                                          |
 | :------------: | :---------------------------------------------- |
