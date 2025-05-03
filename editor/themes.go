@@ -14,6 +14,7 @@ func (e *Editor) setTheme() {
 	case "light": // todo: fix the cursor color
 		e.backgroundColor = tcell.ColorWhiteSmoke
 		e.foregroundColor = tcell.ColorBlack
+		e.highlightColor = tcell.ColorDarkOliveGreen
 	case "valensole":
 		e.backgroundColor = tcell.ColorRebeccaPurple
 		e.foregroundColor = tcell.ColorWhiteSmoke
