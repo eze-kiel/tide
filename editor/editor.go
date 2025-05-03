@@ -11,6 +11,7 @@ import (
 	"github.com/eze-kiel/tide/buffer"
 	"github.com/eze-kiel/tide/cursor"
 	"github.com/eze-kiel/tide/file"
+	"github.com/eze-kiel/tide/options"
 	"github.com/eze-kiel/tide/str"
 	"github.com/gdamore/tcell/v2"
 )
@@ -55,25 +56,25 @@ type Editor struct {
 	StatusTimeout int
 	fileChanged   bool
 
+	theme           string
 	backgroundColor tcell.Color
 	foregroundColor tcell.Color
+	highlightColor  tcell.Color
 
-	/*
-		stuff that will be configurable in the future starts here
-	*/
 	fastJumpLength   int  // how far you go when you hit D or U in VISU mode
 	autoSaveOnSwitch bool // auto save when going from EDIT to VISU modes
 }
 
-func New() (*Editor, error) {
+func New(o options.Opts) (*Editor, error) {
 	e := &Editor{
 		sigs:             make(chan os.Signal, 1),
 		Mode:             VisualMode,
-		autoSaveOnSwitch: false,
+		autoSaveOnSwitch: o.AutoSaveOnSwitch,
 		fileChanged:      false,
-		backgroundColor:  tcell.ColorBlack,
-		foregroundColor:  tcell.ColorWhiteSmoke,
+		theme:            o.Theme,
 	}
+
+	e.setTheme()
 
 	var err error
 	e.Screen, err = tcell.NewScreen()
@@ -123,7 +124,7 @@ func (e *Editor) Run() error {
 
 			if i == e.InternalCursor.Y {
 				style = style.
-					Background(tcell.ColorDarkOliveGreen).
+					Background(e.highlightColor).
 					Foreground(e.foregroundColor).
 					Bold(true)
 			}
@@ -153,7 +154,7 @@ func (e *Editor) Run() error {
 			for j := e.Selection.StartX; j < e.Selection.EndX && j-e.OffsetX < e.Width-LineNumberWidth; j++ {
 				if j >= e.OffsetX {
 					e.Screen.SetContent(LineNumberWidth+(j-e.OffsetX), e.Selection.Line-e.OffsetY, rune(e.Selection.Content[j-e.OffsetX]), nil, tcell.StyleDefault.
-						Background(tcell.ColorDarkOliveGreen).
+						Background(e.highlightColor).
 						Foreground(e.foregroundColor))
 				}
 			}
@@ -163,13 +164,13 @@ func (e *Editor) Run() error {
 		case EditMode:
 			for i, r := range str.EditMode {
 				e.Screen.SetContent(i, e.Height-1, r, nil, tcell.StyleDefault.
-					Background(tcell.ColorDarkOliveGreen).
+					Background(e.highlightColor).
 					Foreground(e.foregroundColor))
 			}
 		case VisualMode:
 			for i, r := range str.VisualMode {
 				e.Screen.SetContent(i, e.Height-1, r, nil, tcell.StyleDefault.
-					Background(tcell.ColorDarkOliveGreen).
+					Background(e.highlightColor).
 					Foreground(e.foregroundColor))
 			}
 		case CommandMode:

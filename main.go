@@ -5,12 +5,20 @@ import (
 
 	"github.com/eze-kiel/tide/editor"
 	"github.com/eze-kiel/tide/file"
+	"github.com/eze-kiel/tide/options"
 )
 
 func main() {
+	var o options.Opts
+	flag.BoolVar(&o.AutoSaveOnSwitch, "autosave-on-switch", false, "enable autosave when switching modes")
+	flag.StringVar(&o.Theme, "color-theme", "dark", "set color theme (can be 'dark', 'light', 'valensole')")
 	flag.Parse()
 
-	e, err := editor.New()
+	if err := o.Verify(); err != nil {
+		panic(err)
+	}
+
+	e, err := editor.New(o)
 	if err != nil {
 		e.Crash(err)
 	}
