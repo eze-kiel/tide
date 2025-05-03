@@ -91,7 +91,6 @@ func (e *Editor) executeCommand(cmd string) {
 			e.Filename = parts[1]
 		}
 		e.SaveToFile()
-		e.exitCommandMode()
 
 	case "wq", "x":
 		if len(parts) > 1 {
@@ -104,4 +103,5 @@ func (e *Editor) executeCommand(cmd string) {
 		e.StatusMsg = str.UnknownCommandErr + parts[0]
 		e.StatusTimeout = DefaultMsgTimeout
 	}
+	e.exitCommandMode()
 }
