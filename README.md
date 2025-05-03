@@ -13,6 +13,7 @@
   - [Usage](#usage)
     - [Build](#build)
     - [Run](#run)
+    - [Options](#options)
     - [Shortcuts](#shortcuts)
       - [Visual mode](#visual-mode)
       - [Edit mode](#edit-mode)
@@ -38,7 +39,16 @@ $ cp ./build/tide /<in your $PATH>/tide
 ### Run
 
 ```
-$ tide [filename]
+$ tide [options] [filename]
+```
+
+### Options
+
+```
+  -autosave-on-switch
+    	enable autosave when switching modes
+  -color-theme string
+    	set color theme (can be 'dark', 'light', 'valensole') (default "dark")
 ```
 
 ### Shortcuts
