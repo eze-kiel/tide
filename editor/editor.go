@@ -14,6 +14,7 @@ import (
 	"github.com/eze-kiel/tide/options"
 	"github.com/eze-kiel/tide/str"
 	"github.com/gdamore/tcell/v2"
+	"github.com/mattn/go-runewidth"
 )
 
 const (
@@ -143,20 +144,69 @@ func (e *Editor) Run() error {
 			}
 
 			l := lines[i]
-			for j := e.OffsetX; j < len(l) && j < e.OffsetX+e.Width-LineNumberWidth; j++ {
-				e.Screen.SetContent(LineNumberWidth+(j-e.OffsetX), i-e.OffsetY, rune(l[j]), nil, tcell.StyleDefault.
-					Background(e.backgroundColor).
-					Foreground(e.foregroundColor))
+			lineRunes := []rune(l)
+			renderX := 0
+			for runeIdx := 0; runeIdx < len(lineRunes) && renderX < e.Width-LineNumberWidth; runeIdx++ {
+				r := lineRunes[runeIdx]
+				charWidth := 1
+				if r == '\t' {
+					// Handle tab expansion
+					tabPos := renderX % buffer.TAB_SIZE
+					charWidth = buffer.TAB_SIZE - tabPos
+					for k := 0; k < charWidth && renderX+k < e.Width-LineNumberWidth; k++ {
+						if renderX+k >= e.OffsetX {
+							e.Screen.SetContent(LineNumberWidth+(renderX+k-e.OffsetX), i-e.OffsetY, ' ', nil, tcell.StyleDefault.
+								Background(e.backgroundColor).
+								Foreground(e.foregroundColor))
+						}
+					}
+				} else {
+					// Handle regular characters including wide ones
+					charWidth = runewidth.RuneWidth(r)
+					if charWidth == 0 {
+						charWidth = 1 // control characters
+					}
+					if renderX >= e.OffsetX && renderX < e.OffsetX+e.Width-LineNumberWidth {
+						e.Screen.SetContent(LineNumberWidth+(renderX-e.OffsetX), i-e.OffsetY, r, nil, tcell.StyleDefault.
+							Background(e.backgroundColor).
+							Foreground(e.foregroundColor))
+					}
+					// For wide characters, fill additional columns with spaces
+					for k := 1; k < charWidth && renderX+k < e.Width-LineNumberWidth; k++ {
+						if renderX+k >= e.OffsetX {
+							e.Screen.SetContent(LineNumberWidth+(renderX+k-e.OffsetX), i-e.OffsetY, ' ', nil, tcell.StyleDefault.
+								Background(e.backgroundColor).
+								Foreground(e.foregroundColor))
+						}
+					}
+				}
+				renderX += charWidth
 			}
 		}
 
 		if e.Selection.Content != "" {
-			for j := e.Selection.StartX; j < e.Selection.EndX && j-e.OffsetX < e.Width-LineNumberWidth; j++ {
-				if j >= e.OffsetX {
-					e.Screen.SetContent(LineNumberWidth+(j-e.OffsetX), e.Selection.Line-e.OffsetY, rune(e.Selection.Content[j-e.OffsetX]), nil, tcell.StyleDefault.
+			selectionRunes := []rune(e.Selection.Content)
+			renderX := e.Selection.StartX
+			for runeIdx := 0; runeIdx < len(selectionRunes) && renderX < e.Selection.EndX; runeIdx++ {
+				r := selectionRunes[runeIdx]
+				charWidth := runewidth.RuneWidth(r)
+				if charWidth == 0 {
+					charWidth = 1
+				}
+				if renderX >= e.OffsetX && renderX < e.OffsetX+e.Width-LineNumberWidth {
+					e.Screen.SetContent(LineNumberWidth+(renderX-e.OffsetX), e.Selection.Line-e.OffsetY, r, nil, tcell.StyleDefault.
 						Background(e.highlightColor).
 						Foreground(e.foregroundColor))
 				}
+				// For wide characters, fill additional columns
+				for k := 1; k < charWidth && renderX+k < e.Selection.EndX; k++ {
+					if renderX+k >= e.OffsetX && renderX+k < e.OffsetX+e.Width-LineNumberWidth {
+						e.Screen.SetContent(LineNumberWidth+(renderX+k-e.OffsetX), e.Selection.Line-e.OffsetY, ' ', nil, tcell.StyleDefault.
+							Background(e.highlightColor).
+							Foreground(e.foregroundColor))
+					}
+				}
+				renderX += charWidth
 			}
 		}
 
@@ -251,20 +301,22 @@ func (e *Editor) internalToRenderPos(x, y int) (rx, ry int) {
 		return 0, y
 	}
 
-	// limit x to the boundaries
+	// limit x to the boundaries based on rune count
+	lineRunes := []rune(lines[y])
 	if x < 0 {
 		x = 0
-	} else if x > len(lines[y]) {
-		x = len(lines[y])
+	} else if x > len(lineRunes) {
+		x = len(lineRunes)
 	}
 
 	rx = 0
-	for i := range x {
-		if lines[y][i] == '\t' {
+	for i := 0; i < x && i < len(lineRunes); i++ {
+		if lineRunes[i] == '\t' {
 			// align to the next tab stop
 			rx += buffer.TAB_SIZE - (rx % buffer.TAB_SIZE)
 		} else {
-			rx++
+			// account for wide characters
+			rx += runewidth.RuneWidth(lineRunes[i])
 		}
 	}
 
@@ -290,18 +342,19 @@ func (e *Editor) moveInternalCursor(dx, dy int) {
 		newY = len(lines) - 1
 	}
 
-	// compute new X without going offlimits
+	// compute new X without going offlimits (using rune count)
+	lineLength := buffer.RuneLength(lines[newY])
 	newX := e.InternalCursor.X + dx
 	if newX < 0 {
 		newX = 0
-	} else if newX > len(lines[newY]) {
-		newX = len(lines[newY])
+	} else if newX > lineLength {
+		newX = lineLength
 	}
 
 	// when moving to a short line, do not end up in the abyss but go to the
 	// end of the next line
-	if dy != 0 && newX > len(lines[newY]) {
-		newX = len(lines[newY])
+	if dy != 0 && newX > lineLength {
+		newX = lineLength
 	}
 
 	e.InternalCursor.X = newX
@@ -347,16 +400,13 @@ func (e *Editor) insertRune(ch rune) {
 
 	y := e.InternalCursor.Y
 	x := e.InternalCursor.X
-	currentLine := lines[y]
+	currentLineRunes := []rune(lines[y])
 
-	newLine := ""
-	if x > 0 {
-		newLine = currentLine[:x]
-	}
-	newLine += string(ch)
-	if x < len(currentLine) {
-		newLine += currentLine[x:]
-	}
+	// Insert the rune at the correct position
+	newRunes := make([]rune, 0, len(currentLineRunes)+1)
+	newRunes = append(newRunes, currentLineRunes[:x]...)
+	newRunes = append(newRunes, ch)
+	newRunes = append(newRunes, currentLineRunes[x:]...)
 
 	e.PreviousActions = append(e.PreviousActions, actions.Action{
 		Kind:  actions.Kinds[actions.InsertRune],
@@ -367,7 +417,7 @@ func (e *Editor) insertRune(ch rune) {
 		}{x, y},
 	})
 
-	lines[y] = newLine
+	lines[y] = string(newRunes)
 	e.updateBufferFromLines(lines)
 
 	e.InternalCursor.X++
@@ -388,15 +438,15 @@ func (e *Editor) insertNewlineAtCursor() {
 
 	y := e.InternalCursor.Y
 	x := e.InternalCursor.X
-	currentLine := lines[y]
+	currentLineRunes := []rune(lines[y])
 
 	firstPart := ""
-	if x > 0 {
-		firstPart = currentLine[:x]
+	if x > 0 && x <= len(currentLineRunes) {
+		firstPart = string(currentLineRunes[:x])
 	}
 	secondPart := ""
-	if x < len(currentLine) {
-		secondPart = currentLine[x:]
+	if x < len(currentLineRunes) {
+		secondPart = string(currentLineRunes[x:])
 	}
 
 	newLines := make([]string, 0, len(lines)+1)
@@ -505,20 +555,24 @@ func (e *Editor) deleteRuneBeforeCursor() {
 
 		e.updateBufferFromLines(newLines)
 
-		e.InternalCursor.X = len(prevLine)
+		e.InternalCursor.X = buffer.RuneLength(prevLine)
 		e.InternalCursor.Y = y - 1
 
 		e.updateRenderCursor()
 		return
 	}
 
-	currentLine := lines[y]
-	newLine := currentLine[:x-1] + currentLine[x:]
-	lines[y] = newLine
+	currentLineRunes := []rune(lines[y])
+	if x > 0 && x <= len(currentLineRunes) {
+		newRunes := make([]rune, 0, len(currentLineRunes)-1)
+		newRunes = append(newRunes, currentLineRunes[:x-1]...)
+		newRunes = append(newRunes, currentLineRunes[x:]...)
+		lines[y] = string(newRunes)
 
-	e.updateBufferFromLines(lines)
+		e.updateBufferFromLines(lines)
 
-	e.InternalCursor.X--
+		e.InternalCursor.X--
+	}
 
 	e.updateRenderCursor()
 }
@@ -533,13 +587,13 @@ func (e *Editor) deleteRuneAtCursor() {
 
 	y := e.InternalCursor.Y
 	x := e.InternalCursor.X
-	currentLine := lines[y]
+	currentLineRunes := []rune(lines[y])
 
 	// if at end of line but not last line, join with next line
-	if x == len(currentLine) && y < len(lines)-1 {
+	if x == len(currentLineRunes) && y < len(lines)-1 {
 		nextLine := lines[y+1]
 
-		newLine := currentLine + nextLine
+		newLine := lines[y] + nextLine
 
 		newLines := make([]string, 0, len(lines)-1)
 		newLines = append(newLines, lines[:y]...)
@@ -551,9 +605,11 @@ func (e *Editor) deleteRuneAtCursor() {
 		e.updateBufferFromLines(newLines)
 	}
 
-	if x < len(currentLine) {
-		newLine := currentLine[:x] + currentLine[x+1:]
-		lines[y] = newLine
+	if x < len(currentLineRunes) {
+		newRunes := make([]rune, 0, len(currentLineRunes)-1)
+		newRunes = append(newRunes, currentLineRunes[:x]...)
+		newRunes = append(newRunes, currentLineRunes[x+1:]...)
+		lines[y] = string(newRunes)
 
 		e.updateBufferFromLines(lines)
 	}
@@ -565,19 +621,19 @@ func (e *Editor) deleteRuneAtCursor() {
 func (e *Editor) deleteRuneAt(x, y int) {
 	lines := e.InternalBuffer.SplitLines()
 
-	if len(lines) == 0 {
+	if len(lines) == 0 || y < 0 || y >= len(lines) {
 		return
 	}
 
 	e.InternalCursor.X = x
 	e.InternalCursor.Y = y
-	currentLine := lines[y]
+	currentLineRunes := []rune(lines[y])
 
 	// if at end of line but not last line, join with next line
-	if x == len(currentLine) && y < len(lines)-1 {
+	if x == len(currentLineRunes) && y < len(lines)-1 {
 		nextLine := lines[y+1]
 
-		newLine := currentLine + nextLine
+		newLine := lines[y] + nextLine
 
 		newLines := make([]string, 0, len(lines)-1)
 		newLines = append(newLines, lines[:y]...)
@@ -589,9 +645,11 @@ func (e *Editor) deleteRuneAt(x, y int) {
 		e.updateBufferFromLines(newLines)
 	}
 
-	if x < len(currentLine) {
-		newLine := currentLine[:x] + currentLine[x+1:]
-		lines[y] = newLine
+	if x >= 0 && x < len(currentLineRunes) {
+		newRunes := make([]rune, 0, len(currentLineRunes)-1)
+		newRunes = append(newRunes, currentLineRunes[:x]...)
+		newRunes = append(newRunes, currentLineRunes[x+1:]...)
+		lines[y] = string(newRunes)
 
 		e.updateBufferFromLines(lines)
 	}
@@ -639,9 +697,11 @@ func (e *Editor) selectLine() {
 	}
 
 	y := e.InternalCursor.Y
-	e.Selection.Content = strings.ReplaceAll(lines[y], "\t", strings.Repeat(buffer.TAB_SYMBOL, buffer.TAB_SIZE))
-	e.Selection.StartX = e.OffsetX
-	e.Selection.EndX = e.OffsetX + len(e.Selection.Content)
+	// Use the rendered version for display, but track the actual line content
+	renderLine := strings.ReplaceAll(lines[y], "\t", strings.Repeat(buffer.TAB_SYMBOL, buffer.TAB_SIZE))
+	e.Selection.Content = renderLine
+	e.Selection.StartX = 0
+	e.Selection.EndX = buffer.DisplayWidth(renderLine)
 	e.Selection.Line = y
 }
 
@@ -715,30 +775,29 @@ func (e *Editor) renderToInternalX(renderX, y int) int {
 	if y < 0 || y >= len(lines) {
 		return -1
 	}
-	line := lines[y]
+	lineRunes := []rune(lines[y])
 
 	internalX := 0
 	renderCol := 0
 
-	for i := range len(line) {
-		if line[i] == '\t' {
+	for i := 0; i < len(lineRunes); i++ {
+		if lineRunes[i] == '\t' {
 			tabStop := (renderCol/buffer.TAB_SIZE + 1) * buffer.TAB_SIZE
 			if renderX < tabStop {
 				return internalX
 			}
 			renderCol = tabStop
 		} else {
-			renderCol++
+			// account for wide characters
+			renderCol += runewidth.RuneWidth(lineRunes[i])
 		}
 
 		if renderCol > renderX {
 			return internalX
 		}
 		internalX++
-
 	}
 	return internalX
-
 }
 
 func (e *Editor) pasteUnder() {
